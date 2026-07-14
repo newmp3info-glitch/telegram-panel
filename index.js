@@ -247,43 +247,4 @@ bot.on("photo", async (ctx, next) => {
     "Success : " + success + "\n" +
     "Failed : " + failed
   );
-});// =========================
-// Part 4.3
-// =========================
-
-// Settings
-bot.hears("⚙️ Settings", (ctx) => {
-
-  ctx.reply(
-    "⚙️ Telegram Panel\n\n" +
-    "👤 Admin : " + ADMIN_ID + "\n" +
-    "📢 Total Channels : " + channels.length
-  );
-
-});
-
-// Start Bot
-bot.launch();
-
-console.log("✅ Bot Started");
-
-// Stop Bot
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
-
-// Render Web Server
-const PORT = process.env.PORT || 10000;
-
-http.createServer((req, res) => {
-
-  res.writeHead(200, {
-    "Content-Type": "text/plain"
-  });
-
-  res.end("Telegram Panel Bot Running");
-
-}).listen(PORT, () => {
-
-  console.log("🌐 Web Server Running : " + PORT);
-
 });
