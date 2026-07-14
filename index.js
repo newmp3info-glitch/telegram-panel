@@ -54,7 +54,8 @@ bot.start((ctx) => {
 
   );
 
-});bot.hears("➕ Add Channel", (ctx) => {
+});
+bot.hears("➕ Add Channel", (ctx) => {
   waitingChannel[ctx.from.id] = true;
   ctx.reply("📢 Send Channel Username\n\nExample:\n@yourchannel");
 });
@@ -137,7 +138,8 @@ bot.on("text", (ctx) => {
 
   }
 
-});bot.hears("📝 Create Post", (ctx) => {
+});
+bot.hears("📝 Create Post", (ctx) => {
   ctx.reply("🚧 Create Post feature coming in Part 4");
 });
 
@@ -168,7 +170,8 @@ http.createServer((req, res) => {
   res.end("Telegram Panel Bot Running");
 }).listen(PORT, () => {
   console.log("🌐 Web Server Running : " + PORT);
-});// =========================
+});
+// =========================
 // Create Post - Part 4.1
 // =========================
 
@@ -244,7 +247,6 @@ bot.on("photo", async (ctx, next) => {
     "Success : " + success + "\n" +
     "Failed : " + failed
   );
-
 });// =========================
 // Part 4.3
 // =========================
