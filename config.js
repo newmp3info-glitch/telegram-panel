@@ -1,4 +1,4 @@
 module.exports = {
-  BOT_TOKEN: "xxxxxxxxxxxxx",
-  ADMIN_ID: 6550104053
+  BOT_TOKEN: process.env.BOT_TOKEN,
+  ADMIN_ID: process.env.ADMIN_ID
 };
