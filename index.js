@@ -248,3 +248,34 @@ bot.on("photo", async (ctx, next) => {
     "Failed : " + failed
   );
 });
+// =========================
+// Part 5.1
+// =========================
+
+let postMode = {};
+
+bot.hears("📝 Create Post", (ctx) => {
+
+  postMode[ctx.from.id] = true;
+
+  ctx.reply("📷 Send Photo");
+
+});
+
+bot.on("photo", async (ctx, next) => {
+
+  if (!postMode[ctx.from.id]) {
+    return next();
+  }
+
+  const photo = ctx.message.photo.pop();
+
+  postData[ctx.from.id] = {
+    file_id: photo.file_id
+  };
+
+  ctx.reply("📝 Send HTML Caption");
+
+  postMode[ctx.from.id] = "caption";
+
+});
