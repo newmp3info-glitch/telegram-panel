@@ -1,4 +1,4 @@
 module.exports = {
-  BOT_TOKEN: "7669879994:AAGzMiligrDNJyxA2EaG3R88aJ0DvXTzELk",
-  ADMIN_ID: 6550104053
+  BOT_TOKEN: "xxxxxxxxxxxxx",
+  ADMIN_ID: 9999999999
 };
