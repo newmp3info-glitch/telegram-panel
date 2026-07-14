@@ -326,3 +326,18 @@ bot.on("text", async (ctx, next) => {
   );
 
 });
+// =========================
+// Part 5.3
+// =========================
+
+bot.catch((err, ctx) => {
+
+  console.log("BOT ERROR :", err);
+
+  if (ctx) {
+    ctx.reply("❌ Error!");
+  }
+
+});
+
+console.log("✅ Part 5 Loaded");
