@@ -7,6 +7,7 @@ const bot = new Telegraf(BOT_TOKEN);
 
 let channels = [];
 
+// চ্যানেল ডাটা লোড করা
 if (fs.existsSync("channels.json")) {
   try {
     channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
@@ -15,9 +16,13 @@ if (fs.existsSync("channels.json")) {
   }
 }
 
+// স্টেট ম্যানেজমেন্ট ভেরিয়েবল
 let waitingChannel = {};
 let waitingRemove = {};
+let postStep = {};
+let postData = {};
 
+// চ্যানেল সেভ করার ফাংশন
 function saveChannels() {
   fs.writeFileSync(
     "channels.json",
@@ -25,8 +30,8 @@ function saveChannels() {
   );
 }
 
+// এডমিন ভেরিফিকেশন মিডলওয়্যার
 bot.use(async (ctx, next) => {
-
   if (!ctx.from) return;
 
   if (ctx.chat.type !== "private") {
@@ -38,70 +43,106 @@ bot.use(async (ctx, next) => {
   }
 
   return next();
-
 });
 
+// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল
 bot.start((ctx) => {
-
   ctx.reply(
     "🏠 Telegram Control Panel",
-
     Markup.keyboard([
       ["➕ Add Channel", "📋 Channel List"],
       ["📝 Create Post", "❌ Remove Channel"],
       ["⚙️ Settings"]
     ]).resize()
-
   );
-
 });
+
+// চ্যানেল যুক্ত করার বাটন
 bot.hears("➕ Add Channel", (ctx) => {
-  waitingChannel[ctx.from.id] = true;
+  const id = ctx.from.id;
+  waitingChannel[id] = true;
+  waitingRemove[id] = false;
+  postStep[id] = null; // অন্যান্য স্টেট বন্ধ করা
+
   ctx.reply("📢 Send Channel Username\n\nExample:\n@yourchannel");
 });
 
+// চ্যানেল লিস্ট দেখার বাটন
 bot.hears("📋 Channel List", (ctx) => {
-
   if (channels.length === 0) {
     return ctx.reply("❌ No Channel Added");
   }
 
   let text = "📋 Channel List\n\n";
-
   channels.forEach((ch, i) => {
     text += `${i + 1}. ${ch}\n`;
   });
 
   ctx.reply(text);
-
 });
 
+// চ্যানেল রিমুভ করার বাটন
 bot.hears("❌ Remove Channel", (ctx) => {
-
-  waitingRemove[ctx.from.id] = true;
+  const id = ctx.from.id;
+  waitingRemove[id] = true;
+  waitingChannel[id] = false;
+  postStep[id] = null;
 
   if (channels.length === 0) {
-    waitingRemove[ctx.from.id] = false;
+    waitingRemove[id] = false;
     return ctx.reply("❌ No Channel Found");
   }
 
-  let text = "Send Channel Username\n\n";
-
+  let text = "Send Channel Username to Remove:\n\n";
   channels.forEach((ch) => {
     text += `${ch}\n`;
   });
 
   ctx.reply(text);
-
 });
 
-bot.on("text", (ctx) => {
+// পোস্ট ক্রিয়েট করার বাটন
+bot.hears("📝 Create Post", (ctx) => {
+  const id = ctx.from.id;
+  postStep[id] = "photo";
+  postData[id] = {};
+  waitingChannel[id] = false;
+  waitingRemove[id] = false;
 
+  ctx.reply("📷 Send Photo");
+});
+
+// সেটিংস বাটন
+bot.hears("⚙️ Settings", (ctx) => {
+  ctx.reply(
+    "⚙️ Telegram Control Panel\n\n" +
+    "👤 Admin : " + ADMIN_ID + "\n" +
+    "📢 Total Channels : " + channels.length
+  );
+});
+
+// ফটো রিসিভ করার হ্যান্ডলার
+bot.on("photo", async (ctx) => {
+  const id = ctx.from.id;
+
+  if (postStep[id] !== "photo") return;
+
+  const photos = ctx.message.photo;
+  const file = photos[photos.length - 1]; // সর্বোচ্চ রেজোলিউশনের ফটো নেওয়া
+
+  postData[id].file_id = file.file_id;
+  postStep[id] = "caption";
+
+  ctx.reply("📝 Now Send HTML Caption");
+});
+
+// সমস্ত টেক্সট ইনপুট প্রসেস করার একক হ্যান্ডলার
+bot.on("text", async (ctx) => {
   const id = ctx.from.id;
   const text = ctx.message.text.trim();
 
+  // ১. চ্যানেল অ্যাড করা
   if (waitingChannel[id]) {
-
     waitingChannel[id] = false;
 
     if (!text.startsWith("@")) {
@@ -113,56 +154,78 @@ bot.on("text", (ctx) => {
     }
 
     channels.push(text);
-
     saveChannels();
-
     return ctx.reply("✅ Channel Added");
-
   }
 
+  // ২. চ্যানেল রিমুভ করা
   if (waitingRemove[id]) {
-
     waitingRemove[id] = false;
 
     const index = channels.indexOf(text);
-
     if (index === -1) {
       return ctx.reply("❌ Channel Not Found");
     }
 
     channels.splice(index, 1);
-
     saveChannels();
-
     return ctx.reply("✅ Channel Removed");
-
   }
 
+  // ৩. পোস্টের ক্যাপশন নেওয়া এবং সব চ্যানেলে পাঠানো
+  if (postStep[id] === "caption") {
+    postStep[id] = null;
+    const caption = text;
+
+    if (channels.length === 0) {
+      delete postData[id];
+      return ctx.reply("❌ No channels found to send the post.");
+    }
+
+    let success = 0;
+    let failed = 0;
+
+    ctx.reply("⏳ Sending post to channels...");
+
+    for (const channel of channels) {
+      try {
+        await bot.telegram.sendPhoto(channel, postData[id].file_id, {
+          caption: caption,
+          parse_mode: "HTML"
+        });
+        success++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    delete postData[id];
+
+    return ctx.reply(
+      `✅ Post Completed\n\nSuccess : ${success}\nFailed : ${failed}`
+    );
+  }
 });
-bot.hears("📝 Create Post", (ctx) => {
-  ctx.reply("🚧 Create Post feature coming in Part 4");
+
+// গ্লোবাল এরর হ্যান্ডলিং
+bot.catch((err, ctx) => {
+  console.error("BOT ERROR :", err);
+  if (ctx) {
+    ctx.reply("❌ An error occurred!");
+  }
 });
 
-bot.hears("⚙️ Settings", (ctx) => {
-  ctx.reply(
-    "⚙️ Telegram Control Panel\n\n" +
-    "👤 Admin : " + ADMIN_ID + "\n" +
-    "📢 Total Channels : " + channels.length
-  );
+// বট চালু করা
+bot.launch().then(() => {
+  console.log("✅ Bot Started Successfully");
 });
 
-// Bot Start
-bot.launch();
-
-console.log("✅ Bot Started");
-
-// Graceful Stop
+// গ্রেসফুল স্টপ (বট বন্ধ করার জন্য)
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
 // Render Web Server
 const PORT = process.env.PORT || 10000;
-
 http.createServer((req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/plain"
@@ -171,173 +234,3 @@ http.createServer((req, res) => {
 }).listen(PORT, () => {
   console.log("🌐 Web Server Running : " + PORT);
 });
-// =========================
-// Create Post - Part 4.1
-// =========================
-
-let postStep = {};
-let postData = {};
-
-bot.hears("📝 Create Post", (ctx) => {
-
-  postStep[ctx.from.id] = "photo";
-
-  postData[ctx.from.id] = {};
-
-  ctx.reply("📷 Send Photo");
-
-});
-
-bot.on("photo", async (ctx, next) => {
-
-  const id = ctx.from.id;
-
-  if (postStep[id] !== "photo") {
-    return next();
-  }
-
-  const photos = ctx.message.photo;
-
-  const file = photos[photos.length - 1];
-
-  postData[id].file_id = file.file_id;
-
-  postStep[id] = "caption";
-
-  return ctx.reply("📝 Now Send HTML Caption");
-
-});bot.on("text", async (ctx, next) => {
-
-  const id = ctx.from.id;
-
-  if (postStep[id] !== "caption") {
-    return next();
-  }
-
-  postData[id].caption = ctx.message.text;
-
-  postStep[id] = null;
-
-  let success = 0;
-  let failed = 0;
-
-  for (const chat of channels) {
-
-    try {
-
-      await bot.telegram.sendPhoto(chat, postData[id].file_id, {
-        caption: postData[id].caption,
-        parse_mode: "HTML"
-      });
-
-      success++;
-
-    } catch (e) {
-
-      failed++;
-
-    }
-
-  }
-
-  delete postData[id];
-
-  ctx.reply(
-    "✅ Post Completed\n\n" +
-    "Success : " + success + "\n" +
-    "Failed : " + failed
-  );
-});
-// =========================
-// Part 5.1
-// =========================
-
-let postMode = {};
-
-bot.hears("📝 Create Post", (ctx) => {
-
-  postMode[ctx.from.id] = true;
-
-  ctx.reply("📷 Send Photo");
-
-});
-
-bot.on("photo", async (ctx, next) => {
-
-  if (!postMode[ctx.from.id]) {
-    return next();
-  }
-
-  const photo = ctx.message.photo.pop();
-
-  postData[ctx.from.id] = {
-    file_id: photo.file_id
-  };
-
-  ctx.reply("📝 Send HTML Caption");
-
-  postMode[ctx.from.id] = "caption";
-
-});
-// =========================
-// Part 5.2
-// =========================
-
-bot.on("text", async (ctx, next) => {
-
-  if (postMode[ctx.from.id] !== "caption") {
-    return next();
-  }
-
-  postMode[ctx.from.id] = false;
-
-  const caption = ctx.message.text;
-
-  let success = 0;
-  let failed = 0;
-
-  for (const channel of channels) {
-
-    try {
-
-      await bot.telegram.sendPhoto(
-        channel,
-        postData[ctx.from.id].file_id,
-        {
-          caption,
-          parse_mode: "HTML"
-        }
-      );
-
-      success++;
-
-    } catch (err) {
-
-      failed++;
-
-    }
-
-  }
-
-  delete postData[ctx.from.id];
-
-  ctx.reply(
-    `✅ Done\n\nSuccess: ${success}\nFailed: ${failed}`
-  );
-
-});
-// =========================
-// Part 5.3
-// =========================
-
-bot.catch((err, ctx) => {
-
-  console.log("BOT ERROR :", err);
-
-  if (ctx) {
-    ctx.reply("❌ Error!");
-  }
-
-});
-
-console.log("✅ Part 5 Loaded");
