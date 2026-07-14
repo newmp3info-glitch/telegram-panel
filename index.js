@@ -279,3 +279,50 @@ bot.on("photo", async (ctx, next) => {
   postMode[ctx.from.id] = "caption";
 
 });
+// =========================
+// Part 5.2
+// =========================
+
+bot.on("text", async (ctx, next) => {
+
+  if (postMode[ctx.from.id] !== "caption") {
+    return next();
+  }
+
+  postMode[ctx.from.id] = false;
+
+  const caption = ctx.message.text;
+
+  let success = 0;
+  let failed = 0;
+
+  for (const channel of channels) {
+
+    try {
+
+      await bot.telegram.sendPhoto(
+        channel,
+        postData[ctx.from.id].file_id,
+        {
+          caption,
+          parse_mode: "HTML"
+        }
+      );
+
+      success++;
+
+    } catch (err) {
+
+      failed++;
+
+    }
+
+  }
+
+  delete postData[ctx.from.id];
+
+  ctx.reply(
+    `✅ Done\n\nSuccess: ${success}\nFailed: ${failed}`
+  );
+
+});
