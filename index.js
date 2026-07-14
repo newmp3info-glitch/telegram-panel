@@ -1,5 +1,6 @@
 const { Telegraf, Markup } = require("telegraf");
 const { BOT_TOKEN, ADMIN_ID } = require("./config");
+const http = require("http");
 
 const bot = new Telegraf(BOT_TOKEN);
 
@@ -32,6 +33,17 @@ bot.start((ctx) => {
   );
 });
 
+// Bot চালু
 bot.launch();
 
 console.log("✅ Bot Started");
+
+// Render-এর জন্য Web Server
+const PORT = process.env.PORT || 10000;
+
+http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("Bot is running!");
+}).listen(PORT, () => {
+  console.log(`Web server running on port ${PORT}`);
+});
