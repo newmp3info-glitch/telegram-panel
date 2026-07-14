@@ -168,4 +168,120 @@ http.createServer((req, res) => {
   res.end("Telegram Panel Bot Running");
 }).listen(PORT, () => {
   console.log("🌐 Web Server Running : " + PORT);
+});// =========================
+// Create Post - Part 4.1
+// =========================
+
+let postStep = {};
+let postData = {};
+
+bot.hears("📝 Create Post", (ctx) => {
+
+  postStep[ctx.from.id] = "photo";
+
+  postData[ctx.from.id] = {};
+
+  ctx.reply("📷 Send Photo");
+
+});
+
+bot.on("photo", async (ctx, next) => {
+
+  const id = ctx.from.id;
+
+  if (postStep[id] !== "photo") {
+    return next();
+  }
+
+  const photos = ctx.message.photo;
+
+  const file = photos[photos.length - 1];
+
+  postData[id].file_id = file.file_id;
+
+  postStep[id] = "caption";
+
+  return ctx.reply("📝 Now Send HTML Caption");
+
+});bot.on("text", async (ctx, next) => {
+
+  const id = ctx.from.id;
+
+  if (postStep[id] !== "caption") {
+    return next();
+  }
+
+  postData[id].caption = ctx.message.text;
+
+  postStep[id] = null;
+
+  let success = 0;
+  let failed = 0;
+
+  for (const chat of channels) {
+
+    try {
+
+      await bot.telegram.sendPhoto(chat, postData[id].file_id, {
+        caption: postData[id].caption,
+        parse_mode: "HTML"
+      });
+
+      success++;
+
+    } catch (e) {
+
+      failed++;
+
+    }
+
+  }
+
+  delete postData[id];
+
+  ctx.reply(
+    "✅ Post Completed\n\n" +
+    "Success : " + success + "\n" +
+    "Failed : " + failed
+  );
+
+});// =========================
+// Part 4.3
+// =========================
+
+// Settings
+bot.hears("⚙️ Settings", (ctx) => {
+
+  ctx.reply(
+    "⚙️ Telegram Panel\n\n" +
+    "👤 Admin : " + ADMIN_ID + "\n" +
+    "📢 Total Channels : " + channels.length
+  );
+
+});
+
+// Start Bot
+bot.launch();
+
+console.log("✅ Bot Started");
+
+// Stop Bot
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+// Render Web Server
+const PORT = process.env.PORT || 10000;
+
+http.createServer((req, res) => {
+
+  res.writeHead(200, {
+    "Content-Type": "text/plain"
+  });
+
+  res.end("Telegram Panel Bot Running");
+
+}).listen(PORT, () => {
+
+  console.log("🌐 Web Server Running : " + PORT);
+
 });
