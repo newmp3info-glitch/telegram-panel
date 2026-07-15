@@ -37,6 +37,14 @@ let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
+// Reusable Main Menu Keyboard Layout (Added 🏠 Home Button)
+const mainKeyboard = Markup.keyboard([
+  ["📝 Create Post", "⏰ Schedule Post"],
+  ["📋 Channel List", "✏️ Edit Post"],
+  ["➕ Add Channel", "❌ Remove Channel"],
+  ["🏠 Home", "⚙️ Settings"]
+]).resize();
+
 // Function to save channels
 function saveChannels() {
   fs.writeFileSync(
@@ -79,18 +87,16 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// Start command & Control Panel (updated with English buttons)
+// Start command & Control Panel
 bot.start((ctx) => {
   resetStates(ctx.from.id);
-  ctx.reply(
-    "🏠 Telegram Control Panel",
-    Markup.keyboard([
-      ["📝 Create Post", "⏰ Schedule Post"],
-      ["📋 Channel List", "✏️ Edit Post"],
-      ["➕ Add Channel", "❌ Remove Channel"],
-      ["⚙️ Settings"]
-    ]).resize()
-  );
+  ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
+});
+
+// 🏠 Home Button Handler (Acts exactly like /start and clears all states)
+bot.hears("🏠 Home", (ctx) => {
+  resetStates(ctx.from.id);
+  ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
 });
 
 // Add channel button
@@ -150,7 +156,7 @@ bot.hears("📝 Create Post", (ctx) => {
   );
 });
 
-// 1. Schedule post button
+// Schedule post button
 bot.hears("⏰ Schedule Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -164,7 +170,7 @@ bot.hears("⏰ Schedule Post", (ctx) => {
   );
 });
 
-// 2. Edit post button
+// Edit post button
 bot.hears("✏️ Edit Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -188,7 +194,7 @@ bot.hears("⚙️ Settings", (ctx) => {
   );
 });
 
-// Handler to receive photos along with captions (updated for scheduled posts)
+// Handler to receive photos along with captions
 bot.on("photo", async (ctx) => {
   const id = ctx.from.id;
 
@@ -300,7 +306,6 @@ bot.on("text", async (ctx) => {
   // 4. Edit post - Receive message ID
   if (editStep[id] === "waiting_msg_id") {
     let msgId = text;
-    // Extract message ID from link if present
     if (text.includes("/")) {
       const parts = text.split("/");
       msgId = parts[parts.length - 1];
@@ -324,14 +329,12 @@ bot.on("text", async (ctx) => {
     editStep[id] = null;
     ctx.reply("⏳ Editing post in channel...");
 
-    // Try to edit photo caption
     try {
       await bot.telegram.editMessageCaption(channel, messageId, null, text, {
         parse_mode: "HTML"
       });
       ctx.reply("✅ Post Caption Edited Successfully!");
     } catch (err) {
-      // Fallback to text edit if message is a regular text post
       try {
         await bot.telegram.editMessageText(channel, messageId, null, text, {
           parse_mode: "HTML"
@@ -349,29 +352,24 @@ bot.on("text", async (ctx) => {
   if (scheduleStep[id] === "waiting_time") {
     let targetTime;
 
-    // If user sends only minutes (e.g., 30)
     if (/^\d+$/.test(text)) {
       const minutes = parseInt(text);
       targetTime = new Date(Date.now() + minutes * 60 * 1000);
     } else {
-      // Check YYYY-MM-DD HH:MM format and convert according to BD time (GMT+6)
       const match = text.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
       if (match) {
         const [_, year, month, day, hour, minute] = match;
-        // Create ISO object with Bangladesh (+06:00 offset) time
         const isoString = `${year}-${month}-${day}T${hour}:${minute}:00+06:00`;
         targetTime = new Date(isoString);
       } else {
-        targetTime = new Date(text); // Try any other standard date format
+        targetTime = new Date(text);
       }
     }
 
-    // Reject if time is invalid or in the past
     if (!targetTime || isNaN(targetTime.getTime()) || targetTime <= new Date()) {
       return ctx.reply("❌ Invalid time or past time provided! Please send a valid time or duration in minutes.");
     }
 
-    // Add to schedule list
     scheduledPosts.push({
       file_id: scheduleData[id].file_id,
       caption: scheduleData[id].caption,
@@ -382,7 +380,6 @@ bot.on("text", async (ctx) => {
     scheduleStep[id] = null;
     scheduleData[id] = null;
 
-    // Display time in local format
     const timeShow = targetTime.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' });
 
     return ctx.reply(
@@ -393,7 +390,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background scheduler (checks every 30 seconds if any post is scheduled)
+// Background scheduler (checks every 30 seconds)
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
 
@@ -404,7 +401,6 @@ setInterval(async () => {
     const post = scheduledPosts[i];
     const postTime = new Date(post.time);
 
-    // If scheduled time has passed, start sending to channels
     if (postTime <= now) {
       let success = 0;
       let failed = 0;
@@ -422,7 +418,6 @@ setInterval(async () => {
         }
       }
 
-      // Send notification to admin
       try {
         await bot.telegram.sendMessage(
           ADMIN_ID,
@@ -433,7 +428,6 @@ setInterval(async () => {
         );
       } catch (e) {}
 
-      // Remove from schedule list
       scheduledPosts.splice(i, 1);
       hasChanges = true;
     }
@@ -442,7 +436,7 @@ setInterval(async () => {
   if (hasChanges) {
     saveSchedule();
   }
-}, 30000); // 30 seconds interval
+}, 30000);
 
 // Global error handling
 bot.catch((err, ctx) => {
@@ -454,9 +448,14 @@ bot.catch((err, ctx) => {
   }
 });
 
-// Start the bot
+// Start the bot & Set Official Telegram Menu Button
 bot.launch().then(() => {
-  console.log("✅ Bot Started Successfully with Schedule & Edit features");
+  console.log("✅ Bot Started Successfully with Schedule, Edit & Home features");
+  
+  // Sets the official 'Menu' button next to the text field
+  bot.telegram.setMyCommands([
+    { command: "start", description: "Open Main Control Panel" }
+  ]).catch((err) => console.error("Failed to set menu command:", err));
 });
 
 // Graceful shutdown
