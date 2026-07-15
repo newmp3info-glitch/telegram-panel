@@ -61,7 +61,7 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Row 1: 2 Side-by-side | Row 2: 1 Centered)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (With Colored Button Styling)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
@@ -83,14 +83,14 @@ function processPost(caption) {
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // Your 3 permanent buttons and links configured in 2+1 layout
+  // 🎨 Adding Color Styles (style: "primary" for Blue, style: "danger" for Red)
   const inlineKeyboard = [
     [
-      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3" },
-      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138" }
+      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3", style: "primary" },
+      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "primary" }
     ],
     [
-      { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: "https://t.me/TotalYonoCode/3" }
+      { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: "https://t.me/TotalYonoCode/3", style: "danger" }
     ]
   ];
   
@@ -300,7 +300,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with 100% Automated 2+1 Custom Grid.");
+  console.log("✅ Bot launched with 100% Automated 2+1 Colored Custom Grid.");
 });
 
 const PORT = process.env.PORT || 10000;
