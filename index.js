@@ -1,4 +1,4 @@
-Const { Telegraf, Markup } = require("telegraf");
+const { Telegraf, Markup } = require("telegraf");
 const { BOT_TOKEN, ADMIN_ID } = require("./config");
 const http = require("http");
 const fs = require("fs");
@@ -45,13 +45,13 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল
+// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল (বাটনগুলোর স্থান পরিবর্তন করা হয়েছে)
 bot.start((ctx) => {
   ctx.reply(
     "🏠 Telegram Control Panel",
     Markup.keyboard([
-      ["➕ Add Channel", "📋 Channel List"],
-      ["📝 Create Post", "❌ Remove Channel"],
+      ["📝 Create Post", "📋 Channel List"],      // পোস্ট বাটনটি উপরে আনা হয়েছে
+      ["➕ Add Channel", "❌ Remove Channel"],    // চ্যানেল অ্যাড বাটনটি নিচে নেওয়া হয়েছে
       ["⚙️ Settings"]
     ]).resize()
   );
