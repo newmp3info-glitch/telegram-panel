@@ -2,6 +2,7 @@
   "name": "telegram-panel",
   "version": "1.0.0",
   "description": "Telegram Control Panel Bot",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
