@@ -20,7 +20,6 @@ if (fs.existsSync("channels.json")) {
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
-let postData = {};
 
 // চ্যানেল সেভ করার ফাংশন
 function saveChannels() {
@@ -45,13 +44,13 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল (বাটনগুলোর স্থান পরিবর্তন করা হয়েছে)
+// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল
 bot.start((ctx) => {
   ctx.reply(
     "🏠 Telegram Control Panel",
     Markup.keyboard([
-      ["📝 Create Post", "📋 Channel List"],      // পোস্ট বাটনটি উপরে আনা হয়েছে
-      ["➕ Add Channel", "❌ Remove Channel"],    // চ্যানেল অ্যাড বাটনটি নিচে নেওয়া হয়েছে
+      ["📝 Create Post", "📋 Channel List"],
+      ["➕ Add Channel", "❌ Remove Channel"],
       ["⚙️ Settings"]
     ]).resize()
   );
@@ -101,15 +100,19 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
-// পোস্ট ক্রিয়েট করার বাটন
+// পোস্ট ক্রিয়েট করার বাটন (একসাথে ফটো ও ক্যাপশন নেওয়ার জন্য প্রস্তুত)
 bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
-  postStep[id] = "photo";
-  postData[id] = {};
+  postStep[id] = "waiting_post";
   waitingChannel[id] = false;
   waitingRemove[id] = false;
 
-  ctx.reply("📷 Send Photo");
+  ctx.reply(
+    "📷 **Send Photo with HTML Caption**\n\n" +
+    "১. প্রথমে গ্যালারি থেকে ফটোটি সিলেক্ট করুন।\n" +
+    "২. এবার 'Add a caption' বক্সে আপনার HTML ক্যাপশনটি লিখুন।\n" +
+    "৩. এরপর সেন্ড বাটনে চাপুন।"
+  );
 });
 
 // সেটিংস বাটন
@@ -121,22 +124,49 @@ bot.hears("⚙️ Settings", (ctx) => {
   );
 });
 
-// ফটো রিসিভ করার হ্যান্ডলার
+// ফটো এবং একই সাথে থাকা ক্যাপশন রিসিভ করার হ্যান্ডলার
 bot.on("photo", async (ctx) => {
   const id = ctx.from.id;
 
-  if (postStep[id] !== "photo") return;
+  if (postStep[id] !== "waiting_post") return;
 
   const photos = ctx.message.photo;
   const file = photos[photos.length - 1]; // সর্বোচ্চ রেজোলিউশনের ফটো নেওয়া
+  const file_id = file.file_id;
 
-  postData[id].file_id = file.file_id;
-  postStep[id] = "caption";
+  // ফটো মেসেজের সাথে পাঠানো ক্যাপশনটি এখানে রিসিভ হবে
+  const caption = ctx.message.caption || "";
 
-  ctx.reply("📝 Now Send HTML Caption");
+  // স্টেট রিসেট করা
+  postStep[id] = null;
+
+  if (channels.length === 0) {
+    return ctx.reply("❌ No channels found to send the post.");
+  }
+
+  let success = 0;
+  let failed = 0;
+
+  ctx.reply("⏳ Sending post to channels...");
+
+  for (const channel of channels) {
+    try {
+      await bot.telegram.sendPhoto(channel, file_id, {
+        caption: caption,
+        parse_mode: "HTML"
+      });
+      success++;
+    } catch (err) {
+      failed++;
+    }
+  }
+
+  return ctx.reply(
+    `✅ Post Completed\n\nSuccess : ${success}\nFailed : ${failed}`
+  );
 });
 
-// সমস্ত টেক্সট ইনপুট প্রসেস করার একক হ্যান্ডলার
+// সমস্ত টেক্সট ইনপুট প্রসেস করার একক হ্যান্ডলার (পোস্টের ক্যাপশন নেওয়ার আলাদা কোড এখান থেকে বাদ দেওয়া হয়েছে)
 bot.on("text", async (ctx) => {
   const id = ctx.from.id;
   const text = ctx.message.text.trim();
@@ -171,40 +201,6 @@ bot.on("text", async (ctx) => {
     saveChannels();
     return ctx.reply("✅ Channel Removed");
   }
-
-  // ৩. পোস্টের ক্যাপশন নেওয়া এবং সব চ্যানেলে পাঠানো
-  if (postStep[id] === "caption") {
-    postStep[id] = null;
-    const caption = text;
-
-    if (channels.length === 0) {
-      delete postData[id];
-      return ctx.reply("❌ No channels found to send the post.");
-    }
-
-    let success = 0;
-    let failed = 0;
-
-    ctx.reply("⏳ Sending post to channels...");
-
-    for (const channel of channels) {
-      try {
-        await bot.telegram.sendPhoto(channel, postData[id].file_id, {
-          caption: caption,
-          parse_mode: "HTML"
-        });
-        success++;
-      } catch (err) {
-        failed++;
-      }
-    }
-
-    delete postData[id];
-
-    return ctx.reply(
-      `✅ Post Completed\n\nSuccess : ${success}\nFailed : ${failed}`
-    );
-  }
 });
 
 // গ্লোবাল এরর হ্যান্ডলিং
@@ -220,7 +216,7 @@ bot.launch().then(() => {
   console.log("✅ Bot Started Successfully");
 });
 
-// গ্রেসফুল স্টপ (বট বন্ধ করার জন্য)
+// গ্রেসফুল স্টপ
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
