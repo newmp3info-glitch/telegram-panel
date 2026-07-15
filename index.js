@@ -83,14 +83,14 @@ function processPost(caption) {
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 Adding Color Styles (style: "primary" for Blue, style: "danger" for Red)
+  // 🎨 Adding Color Styles (style: "danger" for Blue, style: "green" for Red)
   const inlineKeyboard = [
     [
-      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3", style: "primary" },
-      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "primary" }
+      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3", style: "danger" },
+      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "danger" }
     ],
     [
-      { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: "https://t.me/TotalYonoCode/3", style: "danger" }
+      { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: "https://t.me/TotalYonoCode/3", style: "green" }
     ]
   ];
   
