@@ -37,7 +37,7 @@ let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Reusable Main Menu Keyboard Layout (Added 🏠 Home Button)
+// Reusable Main Menu Keyboard Layout (With Home Button)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post"],
@@ -72,6 +72,41 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
+// 🤖 SMART AUTO-BUTTON PARSER FUNCTION
+// এটি পোস্টের ভেতর থেকে অটোমেটিক লিংক খুঁজে ৪টি প্রিমিয়াম বাটন তৈরি করবে
+function parseInlineButtons(text) {
+  if (!text) return null;
+  
+  // Extract all http/https links from the text
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = text.match(urlRegex) || [];
+  
+  if (urls.length === 0) return null;
+  
+  // Remove duplicate URLs and take up to the first 4 links
+  const uniqueUrls = [...new Set(urls)].slice(0, 4);
+  const inlineKeyboard = [];
+  
+  uniqueUrls.forEach((url, index) => {
+    let label = "🔗 Open Link";
+    
+    // Automatically assign beautiful titles based on your link patterns
+    if (url.includes("allyonorummycode") || index === 0) {
+      label = "📲 Download All Apps";
+    } else if (url.includes("jaiho91") || index === 1) {
+      label = "🔥 Jaiho91 New App";
+    } else if (url.includes("VipYono") || index === 2) {
+      label = "👑 VIP Yono Code";
+    } else if (url.includes("TotalYono") || index === 3) {
+      label = "💗 New Apps List";
+    }
+    
+    inlineKeyboard.push([{ text: label, url: url }]);
+  });
+  
+  return inlineKeyboard.length > 0 ? { inline_keyboard: inlineKeyboard } : null;
+}
+
 // Admin verification middleware
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
@@ -93,7 +128,7 @@ bot.start((ctx) => {
   ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
 });
 
-// 🏠 Home Button Handler (Acts exactly like /start and clears all states)
+// Home Button Handler
 bot.hears("🏠 Home", (ctx) => {
   resetStates(ctx.from.id);
   ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
@@ -152,7 +187,7 @@ bot.hears("📝 Create Post", (ctx) => {
     "📷 **Send Photo with HTML Caption (Instant Post)**\n\n" +
     "1. First, select a photo from your gallery.\n" +
     "2. Write your HTML caption in the 'Add a caption' box.\n" +
-    "3. Press the send button (it will be posted instantly)."
+    "3. Press the send button (it will be posted instantly with auto-buttons)."
   );
 });
 
@@ -194,7 +229,7 @@ bot.hears("⚙️ Settings", (ctx) => {
   );
 });
 
-// Handler to receive photos along with captions
+// Handler to receive photos along with captions (Auto-Button Integrated)
 bot.on("photo", async (ctx) => {
   const id = ctx.from.id;
 
@@ -211,15 +246,19 @@ bot.on("photo", async (ctx) => {
       return ctx.reply("❌ No channels found to send the post.");
     }
 
+    // Auto Parse Buttons from the caption
+    const replyMarkup = parseInlineButtons(caption);
+
     let success = 0;
     let failed = 0;
-    ctx.reply("⏳ Sending post to channels...");
+    ctx.reply("⏳ Sending post with auto-buttons to channels...");
 
     for (const channel of channels) {
       try {
         await bot.telegram.sendPhoto(channel, file_id, {
           caption: caption,
-          parse_mode: "HTML"
+          parse_mode: "HTML",
+          reply_markup: replyMarkup // Attaching the automatic buttons here
         });
         success++;
       } catch (err) {
@@ -229,14 +268,13 @@ bot.on("photo", async (ctx) => {
     return ctx.reply(`✅ Post Completed\n\nSuccess : ${success}\nFailed : ${failed}`);
   }
 
-  // B. First step for schedule posts (saving photo data)
+  // B. First step for schedule posts
   if (scheduleStep[id] === "waiting_post") {
     const photos = ctx.message.photo;
     const file = photos[photos.length - 1];
     const file_id = file.file_id;
     const caption = ctx.message.caption || "";
 
-    // Temporarily save photo data
     scheduleData[id] = { file_id, caption };
     scheduleStep[id] = "waiting_time";
 
@@ -390,7 +428,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background scheduler (checks every 30 seconds)
+// Background scheduler (Auto-Button Integrated for schedules too)
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
 
@@ -405,11 +443,15 @@ setInterval(async () => {
       let success = 0;
       let failed = 0;
 
+      // Auto Parse Buttons for scheduled post too
+      const replyMarkup = parseInlineButtons(post.caption);
+
       for (const channel of channels) {
         try {
           await bot.telegram.sendPhoto(channel, post.file_id, {
             caption: post.caption,
-            parse_mode: "HTML"
+            parse_mode: "HTML",
+            reply_markup: replyMarkup // Attaching the automatic buttons
           });
           success++;
         } catch (err) {
@@ -422,7 +464,7 @@ setInterval(async () => {
         await bot.telegram.sendMessage(
           ADMIN_ID,
           `⏰ **Scheduled Post Update:**\n\n` +
-          `One of your scheduled posts has been successfully sent.\n` +
+          `One of your scheduled posts has been successfully sent with auto-buttons.\n` +
           `✅ Success: ${success}\n` +
           `❌ Failed: ${failed}`
         );
@@ -448,17 +490,14 @@ bot.catch((err, ctx) => {
   }
 });
 
-// Start the bot & Set Official Telegram Menu Button
+// Start the bot & Set Menu Button
 bot.launch().then(() => {
-  console.log("✅ Bot Started Successfully with Schedule, Edit & Home features");
-  
-  // Sets the official 'Menu' button next to the text field
+  console.log("✅ Bot Started Successfully with Auto-Inline Buttons!");
   bot.telegram.setMyCommands([
     { command: "start", description: "Open Main Control Panel" }
   ]).catch((err) => console.error("Failed to set menu command:", err));
 });
 
-// Graceful shutdown
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
