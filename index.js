@@ -30,14 +30,12 @@ if (fs.existsSync("schedule.json")) {
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
-
-// New feature state variables
 let editStep = {};
 let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Reusable Main Menu Keyboard Layout (With Home Button)
+// Main Menu Keyboard Layout
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post"],
@@ -63,11 +61,11 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 FIX & GRID PARSER: Extracts raw URLs safely and places buttons side-by-side
+// 🤖 3-BUTTON CUSTOM GRID PARSER (Row 1: 2 Buttons | Row 2: 1 Button)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
-  // Regex to match raw text URLs only (ignores URLs inside href='...' or href="...")
+  // Regex to match raw text URLs only
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -76,54 +74,50 @@ function processPost(caption) {
   }
   
   const uniqueUrls = [...new Set(urls)];
-  const inlineKeyboard = [];
-  let currentRow = [];
   let cleanedText = caption;
   
-  uniqueUrls.forEach((url, index) => {
-    let label = "🔗 Open Link";
-    
-    // Custom premium labels matching your patterns
-    if (url.includes("allyonorummycode")) {
-      label = "📲 Download All";
-    } else if (url.includes("jaiho91")) {
-      label = "🔥 Jaiho91 App";
-    } else if (url.includes("VipYonoFreeCode/3")) {
-      label = "🎰 Total Game 60";
-    } else if (url.includes("VipYonoFreeCode")) {
-      label = "👑 VIP Yono Code";
-    } else if (url.includes("TotalYonoCode")) {
-      label = "💗 New Apps List";
-    } else {
-      label = `🔗 Link ${index + 1}`;
-    }
-    
-    // Push button to the current row array
-    currentRow.push({ text: label, url: url });
-    
-    // Keep 2 buttons per row (Side-by-side grid)
-    if (currentRow.length === 2) {
-      inlineKeyboard.push(currentRow);
-      currentRow = [];
-    }
-    
-    // Remove the raw text URL safely from caption body
+  // Remove the entire line containing the raw text URLs to keep text area clean
+  uniqueUrls.forEach((url) => {
     const sampleUrl = url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const removeRegex = new RegExp(`(?:\\s*[-\\s☞]+\\s*|\\s*&&\\s*|\\s*☞\\s*𝘿𝙤𝙬𝙣𝙡𝙤𝙖𝙙\\s*|\\s+-\\s+)?${sampleUrl}`, 'g');
-    cleanedText = cleanedText.replace(removeRegex, '');
+    const removeLineRegex = new RegExp(`^.*${sampleUrl}.*$`, 'gm');
+    cleanedText = cleanedText.replace(removeLineRegex, '');
   });
   
-  // Push any trailing single button
-  if (currentRow.length > 0) {
-    inlineKeyboard.push(currentRow);
-  }
+  // Clean up excessive blank lines
+  cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // Final caption string polishing
-  cleanedText = cleanedText
-    .replace(/\s*&&\s*$/gm, '')
-    .replace(/\s*[-☞]\s*$/gm, '')
-    .replace(/\n\s*\n\s*\n/g, '\n\n')
-    .trim();
+  let btnNewGame = null;
+  let btnTotalGame = null;
+  let btnAllGames = null;
+  
+  // Map buttons dynamically based on unique URL patterns
+  uniqueUrls.forEach((url) => {
+    if (url.includes("VipYonoFreeCode")) {
+      btnNewGame = { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: url };
+    } else if (url.includes("allyonorummycode")) {
+      btnTotalGame = { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: url };
+    } else if (url.includes("TotalYonoCode")) {
+      btnAllGames = { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: url };
+    } else {
+      // Fallback matching in case URLs differ sequentially
+      if (!btnNewGame) btnNewGame = { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: url };
+      else if (!btnTotalGame) btnTotalGame = { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: url };
+      else if (!btnAllGames) btnAllGames = { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: url };
+    }
+  });
+  
+  const inlineKeyboard = [];
+  const row1 = [];
+  
+  // Row 1 setup: Places 2 buttons side-by-side
+  if (btnNewGame) row1.push(btnNewGame);
+  if (btnTotalGame) row1.push(btnTotalGame);
+  if (row1.length > 0) inlineKeyboard.push(row1);
+  
+  // Row 2 setup: Places 1 single button centered below them
+  if (btnAllGames) {
+    inlineKeyboard.push([btnAllGames]);
+  }
   
   const replyMarkup = inlineKeyboard.length > 0 ? { inline_keyboard: inlineKeyboard } : null;
   return { text: cleanedText, replyMarkup };
@@ -137,19 +131,16 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// Start command & Control Panel
 bot.start((ctx) => {
   resetStates(ctx.from.id);
   ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
 });
 
-// Home Button Handler
 bot.hears("🏠 Home", (ctx) => {
   resetStates(ctx.from.id);
   ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
 });
 
-// Add channel button
 bot.hears("➕ Add Channel", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -157,7 +148,6 @@ bot.hears("➕ Add Channel", (ctx) => {
   ctx.reply("📢 Send Channel Username\n\nExample:\n@yourchannel");
 });
 
-// View channel list button
 bot.hears("📋 Channel List", (ctx) => {
   resetStates(ctx.from.id);
   if (channels.length === 0) return ctx.reply("❌ No Channel Added");
@@ -166,7 +156,6 @@ bot.hears("📋 Channel List", (ctx) => {
   ctx.reply(text);
 });
 
-// Remove channel button
 bot.hears("❌ Remove Channel", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -180,105 +169,67 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
-// Regular post creation button
 bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
   postStep[id] = "waiting_post";
-  ctx.reply(
-    "📷 **Send Photo with HTML Caption (Instant Post)**\n\n" +
-    "1. First, select a photo from your gallery.\n" +
-    "2. Write your HTML caption in the 'Add a caption' box.\n" +
-    "3. Press the send button."
-  );
+  ctx.reply("📷 **Send Photo with HTML Caption (Instant Post)**");
 });
 
-// Schedule post button
 bot.hears("⏰ Schedule Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
   scheduleStep[id] = "waiting_post";
-  ctx.reply(
-    "⏰ **Schedule Post**\n\n" +
-    "1. First, select a photo from your gallery.\n" +
-    "2. Write your HTML caption in the 'Add a caption' box.\n" +
-    "3. Press the send button."
-  );
+  ctx.reply("⏰ **Send Photo with HTML Caption (Schedule Post)**");
 });
 
-// Edit post button
 bot.hears("✏️ Edit Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
   editStep[id] = "waiting_channel";
-  ctx.reply(
-    "✏️ **Edit Post**\n\n" +
-    "Send the Username of the channel where you want to edit the post:\n\n" +
-    "Example:\n@yourchannel"
-  );
+  ctx.reply("✏️ Send the Username of the channel to edit post:");
 });
 
-// Settings button
 bot.hears("⚙️ Settings", (ctx) => {
   resetStates(ctx.from.id);
-  ctx.reply(
-    "⚙️ Telegram Control Panel\n\n" +
-    "👤 Admin : " + ADMIN_ID + "\n" +
-    "📢 Total Channels : " + channels.length + "\n" +
-    "⏰ Scheduled Posts : " + scheduledPosts.length
-  );
+  ctx.reply(`⚙️ Control Panel\n\n📢 Total Channels: ${channels.length}\n⏰ Scheduled Posts: ${scheduledPosts.length}`);
 });
 
-// Photo handler
 bot.on("photo", async (ctx) => {
   const id = ctx.from.id;
 
   if (postStep[id] === "waiting_post") {
     const photos = ctx.message.photo;
     const file = photos[photos.length - 1]; 
-    const file_id = file.file_id;
     const caption = ctx.message.caption || "";
 
     postStep[id] = null;
-    if (channels.length === 0) return ctx.reply("❌ No channels found to send the post.");
+    if (channels.length === 0) return ctx.reply("❌ No channels found.");
 
     const { text: cleanedCaption, replyMarkup } = processPost(caption);
-    let success = 0;
-    let failed = 0;
-    ctx.reply("⏳ Sending clean post with side-by-side buttons...");
+    let success = 0, failed = 0;
 
     for (const channel of channels) {
       try {
-        await bot.telegram.sendPhoto(channel, file_id, {
+        await bot.telegram.sendPhoto(channel, file.file_id, {
           caption: cleanedCaption,
           parse_mode: "HTML",
           reply_markup: replyMarkup
         });
         success++;
-      } catch (err) {
-        failed++;
-        console.error("Post error for channel " + channel + ":", err.message);
-      }
+      } catch (err) { failed++; }
     }
-    return ctx.reply(`✅ Post Completed\n\nSuccess : ${success}\nFailed : ${failed}`);
+    return ctx.reply(`✅ Post Completed\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
   if (scheduleStep[id] === "waiting_post") {
     const photos = ctx.message.photo;
-    const file = photos[photos.length - 1];
-    const scheduleDataObj = { file_id: file.file_id, caption: ctx.message.caption || "" };
-
-    scheduleData[id] = scheduleDataObj;
+    scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-
-    return ctx.reply(
-      "📷 **Photo and Caption Received!**\n\n" +
-      "Please send your scheduled time (Duration in minutes or YYYY-MM-DD HH:MM BD Time):"
-    );
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes or YYYY-MM-DD HH:MM:");
   }
 });
 
-// Text inputs handler
 bot.on("text", async (ctx) => {
   const id = ctx.from.id;
   const text = ctx.message.text.trim();
@@ -302,41 +253,29 @@ bot.on("text", async (ctx) => {
   }
 
   if (editStep[id] === "waiting_channel") {
-    if (!text.startsWith("@")) return ctx.reply("❌ Invalid Channel Username.");
+    if (!text.startsWith("@")) return ctx.reply("❌ Invalid Username.");
     editData[id] = { channel: text };
     editStep[id] = "waiting_msg_id";
-    return ctx.reply("Send the **Message ID** or copy-paste the **Post Link**:");
+    return ctx.reply("Send the Message ID:");
   }
 
   if (editStep[id] === "waiting_msg_id") {
-    let msgId = text;
-    if (text.includes("/")) {
-      const parts = text.split("/");
-      msgId = parts[parts.length - 1];
-    }
+    let msgId = text.includes("/") ? text.split("/").pop() : text;
     msgId = parseInt(msgId);
-    if (isNaN(msgId)) return ctx.reply("❌ Invalid Message ID.");
+    if (isNaN(msgId)) return ctx.reply("❌ Invalid ID.");
     editData[id].messageId = msgId;
     editStep[id] = "waiting_new_text";
-    return ctx.reply("Now, send the new **HTML Caption**:");
+    return ctx.reply("Send the new HTML Caption:");
   }
 
   if (editStep[id] === "waiting_new_text") {
-    const channel = editData[id].channel;
-    const messageId = editData[id].messageId;
+    const { channel, messageId } = editData[id];
     editStep[id] = null;
-    ctx.reply("⏳ Editing post...");
-
     try {
       await bot.telegram.editMessageCaption(channel, messageId, null, text, { parse_mode: "HTML" });
-      ctx.reply("✅ Post Caption Edited Successfully!");
+      ctx.reply("✅ Post Edited!");
     } catch (err) {
-      try {
-        await bot.telegram.editMessageText(channel, messageId, null, text, { parse_mode: "HTML" });
-        ctx.reply("✅ Post Text Edited Successfully!");
-      } catch (err2) {
-        ctx.reply(`❌ Failed to edit.\nError: ${err2.message}`);
-      }
+      ctx.reply(`❌ Failed to edit: ${err.message}`);
     }
     editData[id] = null;
     return;
@@ -350,29 +289,20 @@ bot.on("text", async (ctx) => {
       const match = text.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
       if (match) {
         targetTime = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+06:00`);
-      } else {
-        targetTime = new Date(text);
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime()) || targetTime <= new Date()) {
-      return ctx.reply("❌ Invalid time or past time!");
-    }
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format!");
 
-    scheduledPosts.push({
-      file_id: scheduleData[id].file_id,
-      caption: scheduleData[id].caption,
-      time: targetTime.toISOString()
-    });
+    scheduledPosts.push({ file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
     saveSchedule();
-
     scheduleStep[id] = null;
     scheduleData[id] = null;
-    return ctx.reply(`✅ **Post Scheduled Successfully!**\n📅 \`${targetTime.toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })}\``);
+    return ctx.reply(`✅ Post Scheduled for: ${targetTime.toLocaleString()}`);
   }
 });
 
-// Background scheduler
+// Background Cron Job
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -381,23 +311,12 @@ setInterval(async () => {
   for (let i = scheduledPosts.length - 1; i >= 0; i--) {
     const post = scheduledPosts[i];
     if (new Date(post.time) <= now) {
-      let success = 0;
-      let failed = 0;
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
-
       for (const channel of channels) {
         try {
-          await bot.telegram.sendPhoto(channel, post.file_id, {
-            caption: cleanedCaption,
-            parse_mode: "HTML",
-            reply_markup: replyMarkup
-          });
-          success++;
-        } catch (err) { failed++; }
+          await bot.telegram.sendPhoto(channel, post.file_id, { caption: cleanedCaption, parse_mode: "HTML", reply_markup: replyMarkup });
+        } catch (e) {}
       }
-      try {
-        await bot.telegram.sendMessage(ADMIN_ID, `⏰ **Scheduled Post Update:**\n\n✅ Success: ${success}\n❌ Failed: ${failed}`);
-      } catch (e) {}
       scheduledPosts.splice(i, 1);
       hasChanges = true;
     }
@@ -405,21 +324,12 @@ setInterval(async () => {
   if (hasChanges) saveSchedule();
 }, 30000);
 
-bot.catch((err, ctx) => {
-  console.error("BOT ERROR:", err);
-  if (ctx) try { ctx.reply("❌ An error occurred!"); } catch (e) {}
-});
-
 bot.launch().then(() => {
-  console.log("✅ Bot running with HTML Fix and Side-by-Side Grid Buttons.");
-  bot.telegram.setMyCommands([{ command: "start", description: "Open Control Panel" }]).catch(() => {});
+  console.log("✅ Bot launched with 2+1 Custom Grid Layout successfully.");
 });
-
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Telegram Panel Bot Running");
+  res.end("Bot Engine Online");
 }).listen(PORT);
