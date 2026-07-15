@@ -61,7 +61,7 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Red, Bottom: Green)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
@@ -83,11 +83,11 @@ function processPost(caption) {
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 BUTTON COLORS: style "danger" (Red), style "success" (Green)
+  // 🎨 BUTTON COLORS: style "primary" (Blue like screenshot), style "success" (Green like screenshot)
   const inlineKeyboard = [
     [
-      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3", style: "danger" },
-      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "danger" }
+      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3", style: "primary" },
+      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "primary" }
     ],
     [
       { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: "https://t.me/TotalYonoCode/3", style: "success" }
@@ -300,7 +300,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with Red & Green Custom Grid successfully.");
+  console.log("✅ Bot launched with Blue & Green Custom Grid successfully.");
 });
 
 const PORT = process.env.PORT || 10000;
