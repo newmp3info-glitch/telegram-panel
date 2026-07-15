@@ -72,39 +72,62 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 SMART AUTO-BUTTON PARSER FUNCTION
-// এটি পোস্টের ভেতর থেকে অটোমেটিক লিংক খুঁজে ৪টি প্রিমিয়াম বাটন তৈরি করবে
-function parseInlineButtons(text) {
-  if (!text) return null;
+// 🤖 SMART POST PROCESSOR (Generates buttons and cleanly deletes links from caption)
+function processPost(caption) {
+  if (!caption) return { text: "", replyMarkup: null };
   
   // Extract all http/https links from the text
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = text.match(urlRegex) || [];
+  const urlRegex = /(https?:\/\/[^\s<>]+)/g;
+  const urls = caption.match(urlRegex) || [];
   
-  if (urls.length === 0) return null;
+  if (urls.length === 0) {
+    return { text: caption, replyMarkup: null };
+  }
   
-  // Remove duplicate URLs and take up to the first 4 links
-  const uniqueUrls = [...new Set(urls)].slice(0, 4);
+  // Get unique URLs
+  const uniqueUrls = [...new Set(urls)];
   const inlineKeyboard = [];
+  let cleanedText = caption;
   
   uniqueUrls.forEach((url, index) => {
     let label = "🔗 Open Link";
     
-    // Automatically assign beautiful titles based on your link patterns
-    if (url.includes("allyonorummycode") || index === 0) {
+    // Dynamically assign beautiful labels based on your link patterns
+    if (url.includes("allyonorummycode")) {
       label = "📲 Download All Apps";
-    } else if (url.includes("jaiho91") || index === 1) {
+    } else if (url.includes("jaiho91")) {
       label = "🔥 Jaiho91 New App";
-    } else if (url.includes("VipYono") || index === 2) {
+    } else if (url.includes("VipYonoFreeCode/3")) {
+      label = "🎰 Total Game 60";
+    } else if (url.includes("VipYonoFreeCode")) {
       label = "👑 VIP Yono Code";
-    } else if (url.includes("TotalYono") || index === 3) {
+    } else if (url.includes("TotalYonoCode")) {
       label = "💗 New Apps List";
+    } else {
+      label = `🔗 Link ${index + 1}`;
     }
     
+    // Add to button list
     inlineKeyboard.push([{ text: label, url: url }]);
+    
+    // Escape URL characters for safe regex replacement
+    const escapedUrl = url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    
+    // Remove the URL and any preceding hyphens, arrows (☞), download texts, or spacing
+    const removeRegex = new RegExp(`(?:\\s*[-\\s☞]+\\s*|\\s*&&\\s*|\\s*☞\\s*𝘿𝙤𝙬𝙣𝙡𝙤𝙖𝙙\\s*|\\s+-\\s+)?${escapedUrl}`, 'g');
+    cleanedText = cleanedText.replace(removeRegex, '');
   });
   
-  return inlineKeyboard.length > 0 ? { inline_keyboard: inlineKeyboard } : null;
+  // Final text cleanup (removes trailing hyphens, leftover && symbols, and redundant empty lines)
+  cleanedText = cleanedText
+    .replace(/\s*&&\s*$/gm, '') // Remove trailing && at end of lines
+    .replace(/\s*[-☞]\s*$/gm, '') // Remove trailing - or ☞ at end of lines
+    .replace(/\n\s*\n\s*\n/g, '\n\n') // Max 2 consecutive newlines
+    .trim();
+  
+  const replyMarkup = inlineKeyboard.length > 0 ? { inline_keyboard: inlineKeyboard } : null;
+  
+  return { text: cleanedText, replyMarkup };
 }
 
 // Admin verification middleware
@@ -229,7 +252,7 @@ bot.hears("⚙️ Settings", (ctx) => {
   );
 });
 
-// Handler to receive photos along with captions (Auto-Button Integrated)
+// Handler to receive photos along with captions (Auto-Button & Auto-Cleaner Integrated)
 bot.on("photo", async (ctx) => {
   const id = ctx.from.id;
 
@@ -246,19 +269,19 @@ bot.on("photo", async (ctx) => {
       return ctx.reply("❌ No channels found to send the post.");
     }
 
-    // Auto Parse Buttons from the caption
-    const replyMarkup = parseInlineButtons(caption);
+    // Process post text and generate buttons (This automatically removes raw links)
+    const { text: cleanedCaption, replyMarkup } = processPost(caption);
 
     let success = 0;
     let failed = 0;
-    ctx.reply("⏳ Sending post with auto-buttons to channels...");
+    ctx.reply("⏳ Sending clean post with buttons to channels...");
 
     for (const channel of channels) {
       try {
         await bot.telegram.sendPhoto(channel, file_id, {
-          caption: caption,
+          caption: cleanedCaption,
           parse_mode: "HTML",
-          reply_markup: replyMarkup // Attaching the automatic buttons here
+          reply_markup: replyMarkup
         });
         success++;
       } catch (err) {
@@ -428,7 +451,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background scheduler (Auto-Button Integrated for schedules too)
+// Background scheduler (Auto-Cleaner Integrated for scheduled posts too)
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
 
@@ -443,15 +466,15 @@ setInterval(async () => {
       let success = 0;
       let failed = 0;
 
-      // Auto Parse Buttons for scheduled post too
-      const replyMarkup = parseInlineButtons(post.caption);
+      // Clean post text and get buttons for scheduled posts
+      const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
 
       for (const channel of channels) {
         try {
           await bot.telegram.sendPhoto(channel, post.file_id, {
-            caption: post.caption,
+            caption: cleanedCaption,
             parse_mode: "HTML",
-            reply_markup: replyMarkup // Attaching the automatic buttons
+            reply_markup: replyMarkup
           });
           success++;
         } catch (err) {
@@ -492,7 +515,7 @@ bot.catch((err, ctx) => {
 
 // Start the bot & Set Menu Button
 bot.launch().then(() => {
-  console.log("✅ Bot Started Successfully with Auto-Inline Buttons!");
+  console.log("✅ Bot Started Successfully with Link Cleaner & Auto-Buttons!");
   bot.telegram.setMyCommands([
     { command: "start", description: "Open Main Control Panel" }
   ]).catch((err) => console.error("Failed to set menu command:", err));
