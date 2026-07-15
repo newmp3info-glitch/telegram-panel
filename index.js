@@ -61,65 +61,40 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 3-BUTTON CUSTOM GRID PARSER (Row 1: 2 Buttons | Row 2: 1 Button)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Row 1: 2 Side-by-side | Row 2: 1 Centered)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
-  // Regex to match raw text URLs only
+  let cleanedText = caption;
+  
+  // Just in case you accidentally paste raw links at the bottom, this will clean them up safely
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
-  if (urls.length === 0) {
-    return { text: caption, replyMarkup: null };
+  if (urls.length > 0) {
+    const uniqueUrls = [...new Set(urls)];
+    uniqueUrls.forEach((url) => {
+      const sampleUrl = url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const removeLineRegex = new RegExp(`^.*${sampleUrl}.*$`, 'gm');
+      cleanedText = cleanedText.replace(removeLineRegex, '');
+    });
   }
-  
-  const uniqueUrls = [...new Set(urls)];
-  let cleanedText = caption;
-  
-  // Remove the entire line containing the raw text URLs to keep text area clean
-  uniqueUrls.forEach((url) => {
-    const sampleUrl = url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const removeLineRegex = new RegExp(`^.*${sampleUrl}.*$`, 'gm');
-    cleanedText = cleanedText.replace(removeLineRegex, '');
-  });
   
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  let btnNewGame = null;
-  let btnTotalGame = null;
-  let btnAllGames = null;
+  // Your 3 permanent buttons and links configured in 2+1 layout
+  const inlineKeyboard = [
+    [
+      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3" },
+      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138" }
+    ],
+    [
+      { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: "https://t.me/TotalYonoCode/3" }
+    ]
+  ];
   
-  // Map buttons dynamically based on unique URL patterns
-  uniqueUrls.forEach((url) => {
-    if (url.includes("VipYonoFreeCode")) {
-      btnNewGame = { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: url };
-    } else if (url.includes("allyonorummycode")) {
-      btnTotalGame = { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: url };
-    } else if (url.includes("TotalYonoCode")) {
-      btnAllGames = { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: url };
-    } else {
-      // Fallback matching in case URLs differ sequentially
-      if (!btnNewGame) btnNewGame = { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: url };
-      else if (!btnTotalGame) btnTotalGame = { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: url };
-      else if (!btnAllGames) btnAllGames = { text: "👆𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦👆", url: url };
-    }
-  });
-  
-  const inlineKeyboard = [];
-  const row1 = [];
-  
-  // Row 1 setup: Places 2 buttons side-by-side
-  if (btnNewGame) row1.push(btnNewGame);
-  if (btnTotalGame) row1.push(btnTotalGame);
-  if (row1.length > 0) inlineKeyboard.push(row1);
-  
-  // Row 2 setup: Places 1 single button centered below them
-  if (btnAllGames) {
-    inlineKeyboard.push([btnAllGames]);
-  }
-  
-  const replyMarkup = inlineKeyboard.length > 0 ? { inline_keyboard: inlineKeyboard } : null;
+  const replyMarkup = { inline_keyboard: inlineKeyboard };
   return { text: cleanedText, replyMarkup };
 }
 
@@ -302,7 +277,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Cron Job
+// Background Scheduler
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -325,7 +300,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with 2+1 Custom Grid Layout successfully.");
+  console.log("✅ Bot launched with 100% Automated 2+1 Custom Grid.");
 });
 
 const PORT = process.env.PORT || 10000;
