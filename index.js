@@ -1,4 +1,4 @@
-const { Telegraf, Markup } = require("telegraf");
+Const { Telegraf, Markup } = require("telegraf");
 const { BOT_TOKEN, ADMIN_ID } = require("./config");
 const http = require("http");
 const fs = require("fs");
@@ -34,7 +34,7 @@ function saveChannels() {
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
 
-  if (ctx.chat && ctx.chat.type !== "private") {
+  if (ctx.chat.type !== "private") {
     return;
   }
 
@@ -45,40 +45,30 @@ bot.use(async (ctx, next) => {
   return next();
 });
 
-// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল (Inline Keyboard)
+// স্টার্ট কমান্ড ও কন্ট্রোল প্যানেল
 bot.start((ctx) => {
   ctx.reply(
     "🏠 Telegram Control Panel",
-    Markup.inlineKeyboard([
-      [
-        Markup.button.callback("➕ Add Channel", "add_channel"),
-        Markup.button.callback("📋 Channel List", "channel_list")
-      ],
-      [
-        Markup.button.callback("📝 Create Post", "create_post"),
-        Markup.button.callback("❌ Remove Channel", "remove_channel")
-      ],
-      [
-        Markup.button.callback("⚙️ Settings", "settings")
-      ]
-    ])
+    Markup.keyboard([
+      ["➕ Add Channel", "📋 Channel List"],
+      ["📝 Create Post", "❌ Remove Channel"],
+      ["⚙️ Settings"]
+    ]).resize()
   );
 });
 
-// চ্যানেল যুক্ত করার অ্যাকশন
-bot.action("add_channel", async (ctx) => {
-  await ctx.answerCbQuery(); // বাটনের লোডিং স্পিনার বন্ধ করার জন্য
+// চ্যানেল যুক্ত করার বাটন
+bot.hears("➕ Add Channel", (ctx) => {
   const id = ctx.from.id;
   waitingChannel[id] = true;
   waitingRemove[id] = false;
-  postStep[id] = null; 
+  postStep[id] = null; // অন্যান্য স্টেট বন্ধ করা
 
   ctx.reply("📢 Send Channel Username\n\nExample:\n@yourchannel");
 });
 
-// চ্যানেল লিস্ট দেখার অ্যাকশন
-bot.action("channel_list", async (ctx) => {
-  await ctx.answerCbQuery();
+// চ্যানেল লিস্ট দেখার বাটন
+bot.hears("📋 Channel List", (ctx) => {
   if (channels.length === 0) {
     return ctx.reply("❌ No Channel Added");
   }
@@ -91,9 +81,8 @@ bot.action("channel_list", async (ctx) => {
   ctx.reply(text);
 });
 
-// চ্যানেল রিমুভ করার অ্যাকশন
-bot.action("remove_channel", async (ctx) => {
-  await ctx.answerCbQuery();
+// চ্যানেল রিমুভ করার বাটন
+bot.hears("❌ Remove Channel", (ctx) => {
   const id = ctx.from.id;
   waitingRemove[id] = true;
   waitingChannel[id] = false;
@@ -112,9 +101,8 @@ bot.action("remove_channel", async (ctx) => {
   ctx.reply(text);
 });
 
-// পোস্ট ক্রিয়েট করার অ্যাকশন
-bot.action("create_post", async (ctx) => {
-  await ctx.answerCbQuery();
+// পোস্ট ক্রিয়েট করার বাটন
+bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
   postStep[id] = "photo";
   postData[id] = {};
@@ -124,9 +112,8 @@ bot.action("create_post", async (ctx) => {
   ctx.reply("📷 Send Photo");
 });
 
-// সেটিংস অ্যাকশন
-bot.action("settings", async (ctx) => {
-  await ctx.answerCbQuery();
+// সেটিংস বাটন
+bot.hears("⚙️ Settings", (ctx) => {
   ctx.reply(
     "⚙️ Telegram Control Panel\n\n" +
     "👤 Admin : " + ADMIN_ID + "\n" +
@@ -141,7 +128,7 @@ bot.on("photo", async (ctx) => {
   if (postStep[id] !== "photo") return;
 
   const photos = ctx.message.photo;
-  const file = photos[photos.length - 1]; 
+  const file = photos[photos.length - 1]; // সর্বোচ্চ রেজোলিউশনের ফটো নেওয়া
 
   postData[id].file_id = file.file_id;
   postStep[id] = "caption";
@@ -233,7 +220,7 @@ bot.launch().then(() => {
   console.log("✅ Bot Started Successfully");
 });
 
-// গ্রেসফুল স্টপ
+// গ্রেসফুল স্টপ (বট বন্ধ করার জন্য)
 process.once("SIGINT", () => bot.stop("SIGINT"));
 process.once("SIGTERM", () => bot.stop("SIGTERM"));
 
