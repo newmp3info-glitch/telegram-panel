@@ -7,9 +7,10 @@ const bot = new Telegraf(BOT_TOKEN);
 
 let channels = [];
 let scheduledPosts = [];
+let sentPostsHistory = [];
 let lastSentPosts = {};
 
-// Load channel data
+// Load channel data[span_2](start_span)[span_2](end_span)
 if (fs.existsSync("channels.json")) {
   try {
     channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
@@ -18,7 +19,7 @@ if (fs.existsSync("channels.json")) {
   }
 }
 
-// Load schedule data
+// Load schedule data[span_3](start_span)[span_3](end_span)
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
@@ -27,7 +28,16 @@ if (fs.existsSync("schedule.json")) {
   }
 }
 
-// Load last sent post IDs for easy editing
+// Load sent posts history for smart delete
+if (fs.existsSync("sent_history.json")) {
+  try {
+    sentPostsHistory = JSON.parse(fs.readFileSync("sent_history.json", "utf8"));
+  } catch (e) {
+    sentPostsHistory = [];
+  }
+}
+
+// Load last sent post IDs for quick edit[span_4](start_span)[span_4](end_span)
 if (fs.existsSync("last_posts.json")) {
   try {
     lastSentPosts = JSON.parse(fs.readFileSync("last_posts.json", "utf8"));
@@ -36,18 +46,19 @@ if (fs.existsSync("last_posts.json")) {
   }
 }
 
-// State management variables
+// State management variables[span_5](start_span)[span_5](end_span)
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
 let editStep = {};
+let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Main Menu Keyboard Layout
+// Main Menu Keyboard Layout[span_6](start_span)[span_6](end_span)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
-  ["📋 Channel List", "✏️ Edit Post"],
+  ["📋 Channel List", "✏️ Edit Post", "🗑️ Delete Post"],
   ["➕ Add Channel", "❌ Remove Channel"],
   ["🏠 Home", "⚙️ Settings"]
 ]).resize();
@@ -60,6 +71,10 @@ function saveSchedule() {
   fs.writeFileSync("schedule.json", JSON.stringify(scheduledPosts, null, 2));
 }
 
+function saveSentHistory() {
+  fs.writeFileSync("sent_history.json", JSON.stringify(sentPostsHistory, null, 2));
+}
+
 function saveLastPosts() {
   fs.writeFileSync("last_posts.json", JSON.stringify(lastSentPosts, null, 2));
 }
@@ -69,17 +84,18 @@ function resetStates(id) {
   waitingRemove[id] = false;
   postStep[id] = null;
   editStep[id] = null;
+  deleteStep[id] = null;
   scheduleStep[id] = null;
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)[span_7](start_span)[span_7](end_span)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
   let cleanedText = caption;
   
-  // Clean raw URLs if pasted by mistake
+  // Clean raw URLs if pasted by mistake[span_8](start_span)[span_8](end_span)
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -92,10 +108,10 @@ function processPost(caption) {
     });
   }
   
-  // Clean up excessive blank lines
+  // Clean up excessive blank lines[span_9](start_span)[span_9](end_span)
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 BUTTON COLORS: style "primary" (Blue like screenshot), style "success" (Green like screenshot)
+  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green)[span_10](start_span)[span_10](end_span)
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -111,7 +127,7 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// Admin verification middleware
+// Admin verification middleware[span_11](start_span)[span_11](end_span)
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
   if (ctx.chat.type !== "private") return;
@@ -179,6 +195,15 @@ bot.hears("✏️ Edit Post", (ctx) => {
   ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
 });
 
+// 🗑️ Delete Post Handler (Prompt for post text)
+bot.hears("🗑️ Delete Post", (ctx) => {
+  const id = ctx.from.id;
+  resetStates(id);
+  if (channels.length === 0) return ctx.reply("❌ No channels found.");
+  deleteStep[id] = "waiting_delete_text";
+  ctx.reply("🗑️ **Send the text (or caption) of the post you want to delete from all channels:**");
+});
+
 bot.hears("⚙️ Settings", (ctx) => {
   resetStates(ctx.from.id);
   ctx.reply(`⚙️ Control Panel\n\n📢 Total Channels: ${channels.length}\n⏰ Scheduled Posts: ${scheduledPosts.length}`);
@@ -197,6 +222,7 @@ bot.on("photo", async (ctx) => {
 
     const { text: cleanedCaption, replyMarkup } = processPost(caption);
     let success = 0, failed = 0;
+    let channelMessages = {};
 
     for (const channel of channels) {
       try {
@@ -206,18 +232,25 @@ bot.on("photo", async (ctx) => {
           reply_markup: replyMarkup
         });
         lastSentPosts[channel] = sentMsg.message_id;
+        channelMessages[channel] = sentMsg.message_id;
         success++;
       } catch (err) { failed++; }
     }
+    
+    // Save to history for smart delete
+    sentPostsHistory.unshift({ text: caption, channelMessages, time: Date.now() });
+    if (sentPostsHistory.length > 50) sentPostsHistory.pop();
+    saveSentHistory();
     saveLastPosts();
-    return ctx.reply(`✅ Post Completed & Saved for Quick Edit\n\nSuccess: ${success}\nFailed: ${failed}`);
+
+    return ctx.reply(`✅ Post Completed & Saved for Quick Edit/Delete\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
   if (scheduleStep[id] === "waiting_post") {
     const photos = ctx.message.photo;
     scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes or YYYY-MM-DD HH:MM (IST):");
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **29 04:30 PM**):");
   }
 });
 
@@ -266,19 +299,72 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ **All Channel Posts Edited Successfully!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
+  if (deleteStep[id] === "waiting_delete_text") {
+    deleteStep[id] = null;
+    const targetPostIndex = sentPostsHistory.findIndex(p => p.text.includes(text) || text.includes(p.text.substring(0, 15)));
+    if (targetPostIndex === -1) {
+      return ctx.reply("❌ No matching sent post found with this text! Please make sure you paste the correct caption text.");
+    }
+
+    const postToDelete = sentPostsHistory[targetPostIndex];
+    let success = 0, failed = 0;
+    for (const [channel, msgId] of Object.entries(postToDelete.channelMessages)) {
+      try {
+        await bot.telegram.deleteMessage(channel, msgId);
+        success++;
+      } catch (err) {
+        failed++;
+      }
+    }
+
+    sentPostsHistory.splice(targetPostIndex, 1);
+    saveSentHistory();
+    return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
+  }
+
   if (scheduleStep[id] === "waiting_time") {
     let targetTime;
     if (/^\d+$/.test(text)) {
       targetTime = new Date(Date.now() + parseInt(text) * 60 * 1000);
     } else {
-      const match = text.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
-      if (match) {
-        // Indian Standard Time (+05:30) offset applied here
-        targetTime = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+05:30`);
+      // Simple Date & Time Parser with AM/PM (e.g., 29 04:30 PM) -> uses current month & year automatically
+      const matchSimple = text.match(/^(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
+      const matchFull = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
+
+      let day, month, year, hour, minute, period;
+      const now = new Date();
+
+      if (matchSimple) {
+        day = parseInt(matchSimple[1]);
+        month = now.getMonth() + 1;
+        year = now.getFullYear();
+        hour = parseInt(matchSimple[2]);
+        minute = parseInt(matchSimple[3]);
+        period = matchSimple[4].toUpperCase();
+      } else if (matchFull) {
+        day = parseInt(matchFull[1]);
+        month = parseInt(matchFull[2]);
+        year = parseInt(matchFull[3]);
+        hour = parseInt(matchFull[4]);
+        minute = parseInt(matchFull[5]);
+        period = matchFull[6].toUpperCase();
+      }
+
+      if (period === "PM" && hour < 12) hour += 12;
+      if (period === "AM" && hour === 12) hour = 0;
+
+      if (day && month && year && !isNaN(hour)) {
+        const fMonth = String(month).padStart(2, '0');
+        const fDay = String(day).padStart(2, '0');
+        const fHour = String(hour).padStart(2, '0');
+        const fMin = String(minute).padStart(2, '0');
+
+        // Indian Standard Time (+05:30) offset applied here[span_12](start_span)[span_12](end_span)
+        targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format!");
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `29 04:30 PM`).");
 
     scheduledPosts.push({ file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
     saveSchedule();
@@ -288,7 +374,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler
+// Background Scheduler[span_13](start_span)[span_13](end_span)
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -298,6 +384,7 @@ setInterval(async () => {
     const post = scheduledPosts[i];
     if (new Date(post.time) <= now) {
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
+      let channelMessages = {};
       for (const channel of channels) {
         try {
           const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
@@ -306,9 +393,14 @@ setInterval(async () => {
             reply_markup: replyMarkup 
           });
           lastSentPosts[channel] = sentMsg.message_id;
+          channelMessages[channel] = sentMsg.message_id;
         } catch (e) {}
       }
+      sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
+      if (sentPostsHistory.length > 50) sentPostsHistory.pop();
+      saveSentHistory();
       saveLastPosts();
+      
       scheduledPosts.splice(i, 1);
       hasChanges = true;
     }
@@ -317,7 +409,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with IST Timezone & One-Click Edit feature successfully.");
+  console.log("✅ Bot launched with Simple Date Format & Smart Delete feature successfully.");
 });
 
 const PORT = process.env.PORT || 10000;
