@@ -60,17 +60,22 @@ const gameEmojis = {
   "INDCLUB": "YOUR_EMOJI_ID_21"
 };
 
-// Function to automatically insert custom emojis before game names in caption text
+// Function to automatically insert custom emojis safely without breaking links
 function addGameEmojis(text) {
   if (!text) return "";
   let updatedText = text;
   for (const [gameName, emojiId] of Object.entries(gameEmojis)) {
-    // Regular expression to find the game name in text and prepend custom emoji tag
-    const regex = new RegExp(`(^|\\b|\\s)(${gameName})(\\b|\\s|$)`, "gi");
+    // যদি আইডি না বসানো হয় বা placeholder থাকে, তবে স্কিপ করবে
+    if (!emojiId || emojiId.includes("YOUR_") || emojiId.includes("এখানে")) continue;
+    
+    // \s+ ব্যবহার করা হয়েছে যাতে শুধু সঠিক স্পেসসহ গেমের নামের সাথেই ম্যাচ করে, ইউআরএলের জোড়া শব্দের সাথে নয়
+    const escapedName = gameName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
+    const regex = new RegExp(`(^|\\b|\\s)(${escapedName})(\\b|\\s|$)`, "gi");
     updatedText = updatedText.replace(regex, `$1<tg-emoji emoji-id="${emojiId}">🎮</tg-emoji> $2$3`);
   }
   return updatedText;
 }
+
 
 // Main Menu Keyboard Layout
 const mainKeyboard = Markup.keyboard([
