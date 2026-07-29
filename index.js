@@ -37,7 +37,7 @@ let scheduleData = {};
 
 // 💎 CUSTOM EMOJI MAPPING FOR GAMES (আপনার গেমের নামের সাথে টেলিগ্রামের কাস্টম ইমোজি আইডি এখানে বসাবেন)
 const gameEmojis = {
-  "Jaiho91": "YOUR_EMOJI_ID_1",
+  "Jaiho91": "6289348184669954042",
   "Joy Rummy": "YOUR_EMOJI_ID_2",
   "INR Rummy": "YOUR_EMOJI_ID_3",
   "BOSS Rummy": "YOUR_EMOJI_ID_4",
