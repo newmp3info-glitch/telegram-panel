@@ -35,6 +35,43 @@ let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
+// 💎 CUSTOM EMOJI MAPPING FOR GAMES (আপনার গেমের নামের সাথে টেলিগ্রামের কাস্টম ইমোজি আইডি এখানে বসাবেন)
+const gameEmojis = {
+  "Jaiho91": "YOUR_EMOJI_ID_1",
+  "Joy Rummy": "YOUR_EMOJI_ID_2",
+  "INR Rummy": "YOUR_EMOJI_ID_3",
+  "BOSS Rummy": "YOUR_EMOJI_ID_4",
+  "Ever777": "YOUR_EMOJI_ID_5",
+  "Rummy888": "YOUR_EMOJI_ID_6",
+  "Rummy 77": "YOUR_EMOJI_ID_7",
+  "RummyLudo": "YOUR_EMOJI_ID_8",
+  "777.Game": "YOUR_EMOJI_ID_9",
+  "OKRummy": "YOUR_EMOJI_ID_10",
+  "Hindi777": "YOUR_EMOJI_ID_11",
+  "ClubINR": "YOUR_EMOJI_ID_12",
+  "GameRummy": "YOUR_EMOJI_ID_13",
+  "YesSpin": "YOUR_EMOJI_ID_14",
+  "RumbleRummy": "YOUR_EMOJI_ID_15",
+  "LoveRummy": "YOUR_EMOJI_ID_16",
+  "ShareSlots": "YOUR_EMOJI_ID_17",
+  "MahaGames": "YOUR_EMOJI_ID_18",
+  "HiRummy": "YOUR_EMOJI_ID_19",
+  "JaihoWIN": "YOUR_EMOJI_ID_20",
+  "INDCLUB": "YOUR_EMOJI_ID_21"
+};
+
+// Function to automatically insert custom emojis before game names in caption text
+function addGameEmojis(text) {
+  if (!text) return "";
+  let updatedText = text;
+  for (const [gameName, emojiId] of Object.entries(gameEmojis)) {
+    // Regular expression to find the game name in text and prepend custom emoji tag
+    const regex = new RegExp(`(^|\\b|\\s)(${gameName})(\\b|\\s|$)`, "gi");
+    updatedText = updatedText.replace(regex, `$1<tg-emoji emoji-id="${emojiId}">🎮</tg-emoji> $2$3`);
+  }
+  return updatedText;
+}
+
 // Main Menu Keyboard Layout
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
@@ -82,6 +119,9 @@ function processPost(caption) {
   
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
+  
+  // Apply custom game emojis to the caption text
+  cleanedText = addGameEmojis(cleanedText);
   
   // 🎨 BUTTON COLORS: style "primary" (Blue like screenshot), style "success" (Green like screenshot)
   const inlineKeyboard = [
@@ -249,7 +289,9 @@ bot.on("text", async (ctx) => {
     const { channel, messageId } = editData[id];
     editStep[id] = null;
     try {
-      await bot.telegram.editMessageCaption(channel, messageId, null, text, { parse_mode: "HTML" });
+      // Also apply game emojis to edited text if applicable
+      const formattedText = addGameEmojis(text);
+      await bot.telegram.editMessageCaption(channel, messageId, null, formattedText, { parse_mode: "HTML" });
       ctx.reply("✅ Post Edited!");
     } catch (err) {
       ctx.reply(`❌ Failed to edit: ${err.message}`);
