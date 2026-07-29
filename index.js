@@ -10,7 +10,7 @@ let scheduledPosts = [];
 let sentPostsHistory = [];
 let lastSentPosts = {};
 
-// Load channel data[span_2](start_span)[span_2](end_span)
+// Load channel data[span_1](start_span)[span_1](end_span)
 if (fs.existsSync("channels.json")) {
   try {
     channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
@@ -19,7 +19,7 @@ if (fs.existsSync("channels.json")) {
   }
 }
 
-// Load schedule data[span_3](start_span)[span_3](end_span)
+// Load schedule data[span_2](start_span)[span_2](end_span)
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
@@ -37,7 +37,7 @@ if (fs.existsSync("sent_history.json")) {
   }
 }
 
-// Load last sent post IDs for quick edit[span_4](start_span)[span_4](end_span)
+// Load last sent post IDs for quick edit[span_3](start_span)[span_3](end_span)
 if (fs.existsSync("last_posts.json")) {
   try {
     lastSentPosts = JSON.parse(fs.readFileSync("last_posts.json", "utf8"));
@@ -46,7 +46,7 @@ if (fs.existsSync("last_posts.json")) {
   }
 }
 
-// State management variables[span_5](start_span)[span_5](end_span)
+// State management variables[span_4](start_span)[span_4](end_span)
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
@@ -55,7 +55,7 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Main Menu Keyboard Layout[span_6](start_span)[span_6](end_span)
+// Main Menu Keyboard Layout[span_5](start_span)[span_5](end_span)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post", "🗑️ Delete Post"],
@@ -89,13 +89,13 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)[span_7](start_span)[span_7](end_span)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)[span_6](start_span)[span_6](end_span)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
   let cleanedText = caption;
   
-  // Clean raw URLs if pasted by mistake[span_8](start_span)[span_8](end_span)
+  // Clean raw URLs if pasted by mistake[span_7](start_span)[span_7](end_span)
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -108,10 +108,10 @@ function processPost(caption) {
     });
   }
   
-  // Clean up excessive blank lines[span_9](start_span)[span_9](end_span)
+  // Clean up excessive blank lines[span_8](start_span)[span_8](end_span)
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green)[span_10](start_span)[span_10](end_span)
+  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green)[span_9](start_span)[span_9](end_span)
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -127,7 +127,7 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// Admin verification middleware[span_11](start_span)[span_11](end_span)
+// Admin verification middleware[span_10](start_span)[span_10](end_span)
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
   if (ctx.chat.type !== "private") return;
@@ -149,7 +149,7 @@ bot.hears("➕ Add Channel", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
   waitingChannel[id] = true;
-  ctx.reply("📢 Send Channel Username\n\nExample:\n@yourchannel");
+  ctx.reply("📢 Send all channel usernames together (one per line or space separated):");
 });
 
 bot.hears("📋 Channel List", (ctx) => {
@@ -237,7 +237,6 @@ bot.on("photo", async (ctx) => {
       } catch (err) { failed++; }
     }
     
-    // Save to history for smart delete
     sentPostsHistory.unshift({ text: caption, channelMessages, time: Date.now() });
     if (sentPostsHistory.length > 50) sentPostsHistory.pop();
     saveSentHistory();
@@ -260,11 +259,28 @@ bot.on("text", async (ctx) => {
 
   if (waitingChannel[id]) {
     waitingChannel[id] = false;
-    if (!text.startsWith("@")) return ctx.reply("❌ Invalid Username");
-    if (channels.includes(text)) return ctx.reply("⚠️ Already Added");
-    channels.push(text);
+    
+    // Extract all usernames starting with @ from the multi-line text
+    const foundChannels = text.match(/@[^\s]+/g);
+    if (!foundChannels || foundChannels.length === 0) {
+      return ctx.reply("❌ No valid channel usernames found starting with '@'.");
+    }
+
+    let addedCount = 0;
+    let alreadyCount = 0;
+
+    foundChannels.forEach(ch => {
+      const cleanCh = ch.trim();
+      if (!channels.includes(cleanCh)) {
+        channels.push(cleanCh);
+        addedCount++;
+      } else {
+        alreadyCount++;
+      }
+    });
+
     saveChannels();
-    return ctx.reply("✅ Channel Added");
+    return ctx.reply(`✅ **Channels Added Successfully!**\n\n➕ Newly Added: ${addedCount}\n⚠️ Already Exists: ${alreadyCount}\n📢 Total Channels Now: ${channels.length}`);
   }
 
   if (waitingRemove[id]) {
@@ -327,7 +343,6 @@ bot.on("text", async (ctx) => {
     if (/^\d+$/.test(text)) {
       targetTime = new Date(Date.now() + parseInt(text) * 60 * 1000);
     } else {
-      // Simple Date & Time Parser with AM/PM (e.g., 29 04:30 PM) -> uses current month & year automatically
       const matchSimple = text.match(/^(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
       const matchFull = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
 
@@ -359,7 +374,7 @@ bot.on("text", async (ctx) => {
         const fHour = String(hour).padStart(2, '0');
         const fMin = String(minute).padStart(2, '0');
 
-        // Indian Standard Time (+05:30) offset applied here[span_12](start_span)[span_12](end_span)
+        // Indian Standard Time (+05:30) offset applied here[span_11](start_span)[span_11](end_span)
         targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
       }
     }
@@ -374,7 +389,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler[span_13](start_span)[span_13](end_span)
+// Background Scheduler[span_12](start_span)[span_12](end_span)
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -409,7 +424,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with Simple Date Format & Smart Delete feature successfully.");
+  console.log("✅ Bot launched with Multi-Channel Bulk Add feature successfully.");
 });
 
 const PORT = process.env.PORT || 10000;
