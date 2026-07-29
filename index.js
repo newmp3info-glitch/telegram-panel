@@ -60,21 +60,30 @@ const gameEmojis = {
   "INDCLUB": "YOUR_EMOJI_ID_21"
 };
 
-// Function to automatically insert custom emojis safely without breaking links
+// Function to automatically insert custom emojis safely (Will NOT break URLs or links)
 function addGameEmojis(text) {
   if (!text) return "";
   let updatedText = text;
+  
   for (const [gameName, emojiId] of Object.entries(gameEmojis)) {
     // যদি আইডি না বসানো হয় বা placeholder থাকে, তবে স্কিপ করবে
     if (!emojiId || emojiId.includes("YOUR_") || emojiId.includes("এখানে")) continue;
     
-    // \s+ ব্যবহার করা হয়েছে যাতে শুধু সঠিক স্পেসসহ গেমের নামের সাথেই ম্যাচ করে, ইউআরএলের জোড়া শব্দের সাথে নয়
     const escapedName = gameName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
     const regex = new RegExp(`(^|\\b|\\s)(${escapedName})(\\b|\\s|$)`, "gi");
-    updatedText = updatedText.replace(regex, `$1<tg-emoji emoji-id="${emojiId}">🎮</tg-emoji> $2$3`);
+    
+    updatedText = updatedText.replace(regex, (match, p1, p2, p3, offset, string) => {
+      // লেখার পেছনের অংশ চেক করা হচ্ছে এটি কোনো ওয়েবসাইট লিংক (www বা http) কি না
+      const precedingText = string.substring(Math.max(0, offset - 15), offset);
+      if (/(www\.|https?:\/\/|\[|`)/i.test(precedingText)) {
+        return match; // যদি লিংক বা ইউআরএল হয়, তবে সেটিতে হাত দেবে না (অপরিবর্তিত রাখবে)
+      }
+      return `${p1}<tg-emoji emoji-id="${emojiId}">🎮</tg-emoji> ${p2}${p3}`;
+    });
   }
   return updatedText;
 }
+
 
 
 // Main Menu Keyboard Layout
