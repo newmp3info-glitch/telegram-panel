@@ -7,6 +7,7 @@ const bot = new Telegraf(BOT_TOKEN);
 
 let channels = [];
 let scheduledPosts = [];
+let lastSentPosts = {};
 
 // Load channel data
 if (fs.existsSync("channels.json")) {
@@ -26,12 +27,20 @@ if (fs.existsSync("schedule.json")) {
   }
 }
 
+// Load last sent post IDs for easy editing
+if (fs.existsSync("last_posts.json")) {
+  try {
+    lastSentPosts = JSON.parse(fs.readFileSync("last_posts.json", "utf8"));
+  } catch (e) {
+    lastSentPosts = {};
+  }
+}
+
 // State management variables
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
 let editStep = {};
-let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
@@ -51,12 +60,15 @@ function saveSchedule() {
   fs.writeFileSync("schedule.json", JSON.stringify(scheduledPosts, null, 2));
 }
 
+function saveLastPosts() {
+  fs.writeFileSync("last_posts.json", JSON.stringify(lastSentPosts, null, 2));
+}
+
 function resetStates(id) {
   waitingChannel[id] = false;
   waitingRemove[id] = false;
   postStep[id] = null;
   editStep[id] = null;
-  editData[id] = null;
   scheduleStep[id] = null;
   scheduleData[id] = null;
 }
@@ -98,7 +110,6 @@ function processPost(caption) {
   const replyMarkup = { inline_keyboard: inlineKeyboard };
   return { text: cleanedText, replyMarkup };
 }
-
 
 // Admin verification middleware
 bot.use(async (ctx, next) => {
@@ -163,8 +174,9 @@ bot.hears("⏰ Schedule Post", (ctx) => {
 bot.hears("✏️ Edit Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
-  editStep[id] = "waiting_channel";
-  ctx.reply("✏️ Send the Username of the channel to edit post:");
+  if (channels.length === 0) return ctx.reply("❌ No channels found.");
+  editStep[id] = "waiting_new_text";
+  ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
 });
 
 bot.hears("⚙️ Settings", (ctx) => {
@@ -188,22 +200,24 @@ bot.on("photo", async (ctx) => {
 
     for (const channel of channels) {
       try {
-        await bot.telegram.sendPhoto(channel, file.file_id, {
+        const sentMsg = await bot.telegram.sendPhoto(channel, file.file_id, {
           caption: cleanedCaption,
           parse_mode: "HTML",
           reply_markup: replyMarkup
         });
+        lastSentPosts[channel] = sentMsg.message_id;
         success++;
       } catch (err) { failed++; }
     }
-    return ctx.reply(`✅ Post Completed\n\nSuccess: ${success}\nFailed: ${failed}`);
+    saveLastPosts();
+    return ctx.reply(`✅ Post Completed & Saved for Quick Edit\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
   if (scheduleStep[id] === "waiting_post") {
     const photos = ctx.message.photo;
     scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes or YYYY-MM-DD HH:MM:");
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes or YYYY-MM-DD HH:MM (IST):");
   }
 });
 
@@ -229,33 +243,27 @@ bot.on("text", async (ctx) => {
     return ctx.reply("✅ Channel Removed");
   }
 
-  if (editStep[id] === "waiting_channel") {
-    if (!text.startsWith("@")) return ctx.reply("❌ Invalid Username.");
-    editData[id] = { channel: text };
-    editStep[id] = "waiting_msg_id";
-    return ctx.reply("Send the Message ID:");
-  }
-
-  if (editStep[id] === "waiting_msg_id") {
-    let msgId = text.includes("/") ? text.split("/").pop() : text;
-    msgId = parseInt(msgId);
-    if (isNaN(msgId)) return ctx.reply("❌ Invalid ID.");
-    editData[id].messageId = msgId;
-    editStep[id] = "waiting_new_text";
-    return ctx.reply("Send the new HTML Caption:");
-  }
-
   if (editStep[id] === "waiting_new_text") {
-    const { channel, messageId } = editData[id];
     editStep[id] = null;
-    try {
-      await bot.telegram.editMessageCaption(channel, messageId, null, text, { parse_mode: "HTML" });
-      ctx.reply("✅ Post Edited!");
-    } catch (err) {
-      ctx.reply(`❌ Failed to edit: ${err.message}`);
+    const { text: cleanedCaption, replyMarkup } = processPost(text);
+    let success = 0, failed = 0;
+
+    for (const channel of channels) {
+      if (lastSentPosts[channel]) {
+        try {
+          await bot.telegram.editMessageCaption(channel, lastSentPosts[channel], null, cleanedCaption, {
+            parse_mode: "HTML",
+            reply_markup: replyMarkup
+          });
+          success++;
+        } catch (err) {
+          failed++;
+        }
+      } else {
+        failed++;
+      }
     }
-    editData[id] = null;
-    return;
+    return ctx.reply(`✅ **All Channel Posts Edited Successfully!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
   if (scheduleStep[id] === "waiting_time") {
@@ -265,7 +273,8 @@ bot.on("text", async (ctx) => {
     } else {
       const match = text.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})$/);
       if (match) {
-        targetTime = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+06:00`);
+        // Indian Standard Time (+05:30) offset applied here
+        targetTime = new Date(`${match[1]}-${match[2]}-${match[3]}T${match[4]}:${match[5]}:00+05:30`);
       }
     }
 
@@ -275,7 +284,7 @@ bot.on("text", async (ctx) => {
     saveSchedule();
     scheduleStep[id] = null;
     scheduleData[id] = null;
-    return ctx.reply(`✅ Post Scheduled for: ${targetTime.toLocaleString()}`);
+    return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString()}`);
   }
 });
 
@@ -291,9 +300,15 @@ setInterval(async () => {
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
       for (const channel of channels) {
         try {
-          await bot.telegram.sendPhoto(channel, post.file_id, { caption: cleanedCaption, parse_mode: "HTML", reply_markup: replyMarkup });
+          const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
+            caption: cleanedCaption, 
+            parse_mode: "HTML", 
+            reply_markup: replyMarkup 
+          });
+          lastSentPosts[channel] = sentMsg.message_id;
         } catch (e) {}
       }
+      saveLastPosts();
       scheduledPosts.splice(i, 1);
       hasChanges = true;
     }
@@ -302,7 +317,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with Blue & Green Custom Grid successfully.");
+  console.log("✅ Bot launched with IST Timezone & One-Click Edit feature successfully.");
 });
 
 const PORT = process.env.PORT || 10000;
