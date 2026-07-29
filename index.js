@@ -37,8 +37,9 @@ let scheduleData = {};
 
 
 
-// 💎 CUSTOM EMOJI MAPPING (আপনার টেলিগ্রাম প্যাকের সাথে হুবহু মিল রেখে তৈরি)
+// 💎 CUSTOM EMOJI MAPPING (গেমের নাম ও সঠিক আইডি)
 const gameEmojis = {
+  "Jaiho 91": { id: "6289348184669954042", emoji: "☺️" }, // এখানে নাম "Jaiho 91" এবং আপনার আসল আইডি দেওয়া হলো
   "INR Rummy": { id: "YOUR_EMOJI_ID_1", emoji: "🪙" },
   "BOSS Rummy": { id: "YOUR_EMOJI_ID_2", emoji: "💰" },
   "Ever777": { id: "YOUR_EMOJI_ID_3", emoji: "😛" },
@@ -46,7 +47,6 @@ const gameEmojis = {
   "Yono Rummy": { id: "YOUR_EMOJI_ID_5", emoji: "🌹" },
   "Slots Winner": { id: "YOUR_EMOJI_ID_6", emoji: "🤔" },
   "Jaiho Arcade": { id: "YOUR_EMOJI_ID_7", emoji: "🤭" },
-  "Jaiho 777": { id: "6289348184669954042", emoji: "🤭" }, // এখানে আপনার জাইহোর আসল আইডি বসানো আছে
   "Joy Rummy": { id: "YOUR_EMOJI_ID_9", emoji: "🪙" },
   "Rummy888": { id: "YOUR_EMOJI_ID_10", emoji: "🎲" },
   "Rummy 77": { id: "YOUR_EMOJI_ID_11", emoji: "♠️" },
@@ -64,6 +64,7 @@ const gameEmojis = {
   "JaihoWIN": { id: "YOUR_EMOJI_ID_23", emoji: "🎯" },
   "INDCLUB": { id: "YOUR_EMOJI_ID_24", emoji: "🌟" }
 };
+
 
 // Function to automatically insert the exact custom emoji matching your Telegram pack
 function addGameEmojis(text) {
