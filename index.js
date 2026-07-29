@@ -249,7 +249,7 @@ bot.on("photo", async (ctx) => {
     const photos = ctx.message.photo;
     scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **29 04:30 PM**):");
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **30 09:00 AM**):");
   }
 });
 
@@ -260,7 +260,6 @@ bot.on("text", async (ctx) => {
   if (waitingChannel[id]) {
     waitingChannel[id] = false;
     
-    // Extract all usernames starting with @ from the multi-line text
     const foundChannels = text.match(/@[^\s]+/g);
     if (!foundChannels || foundChannels.length === 0) {
       return ctx.reply("❌ No valid channel usernames found starting with '@'.");
@@ -374,18 +373,18 @@ bot.on("text", async (ctx) => {
         const fHour = String(hour).padStart(2, '0');
         const fMin = String(minute).padStart(2, '0');
 
-        // Indian Standard Time (+05:30) offset applied here[span_11](start_span)[span_11](end_span)
+        // Indian Standard Time (+05:30) offset applied[span_11](start_span)[span_11](end_span)
         targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `29 04:30 PM`).");
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `30 09:00 AM`).");
 
     scheduledPosts.push({ file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
     saveSchedule();
     scheduleStep[id] = null;
     scheduleData[id] = null;
-    return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString()}`);
+    return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 });
 
