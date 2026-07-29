@@ -35,54 +35,59 @@ let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 💎 CUSTOM EMOJI MAPPING FOR GAMES (আপনার গেমের নামের সাথে টেলিগ্রামের কাস্টম ইমোজি আইডি এখানে বসাবেন)
+
+
+// 💎 CUSTOM EMOJI MAPPING (আপনার টেলিগ্রাম প্যাকের সাথে হুবহু মিল রেখে তৈরি)
 const gameEmojis = {
-  "Jaiho91": "6289348184669954042",
-  "Joy Rummy": "YOUR_EMOJI_ID_2",
-  "INR Rummy": "YOUR_EMOJI_ID_3",
-  "BOSS Rummy": "YOUR_EMOJI_ID_4",
-  "Ever777": "YOUR_EMOJI_ID_5",
-  "Rummy888": "YOUR_EMOJI_ID_6",
-  "Rummy 77": "YOUR_EMOJI_ID_7",
-  "RummyLudo": "YOUR_EMOJI_ID_8",
-  "777.Game": "YOUR_EMOJI_ID_9",
-  "OKRummy": "YOUR_EMOJI_ID_10",
-  "Hindi777": "YOUR_EMOJI_ID_11",
-  "ClubINR": "YOUR_EMOJI_ID_12",
-  "GameRummy": "YOUR_EMOJI_ID_13",
-  "YesSpin": "YOUR_EMOJI_ID_14",
-  "RumbleRummy": "YOUR_EMOJI_ID_15",
-  "LoveRummy": "YOUR_EMOJI_ID_16",
-  "ShareSlots": "YOUR_EMOJI_ID_17",
-  "MahaGames": "YOUR_EMOJI_ID_18",
-  "HiRummy": "YOUR_EMOJI_ID_19",
-  "JaihoWIN": "YOUR_EMOJI_ID_20",
-  "INDCLUB": "YOUR_EMOJI_ID_21"
+  "INR Rummy": { id: "YOUR_EMOJI_ID_1", emoji: "🪙" },
+  "BOSS Rummy": { id: "YOUR_EMOJI_ID_2", emoji: "💰" },
+  "Ever777": { id: "YOUR_EMOJI_ID_3", emoji: "😛" },
+  "GameRummy": { id: "YOUR_EMOJI_ID_4", emoji: "😵‍💫" },
+  "Yono Rummy": { id: "YOUR_EMOJI_ID_5", emoji: "🌹" },
+  "Slots Winner": { id: "YOUR_EMOJI_ID_6", emoji: "🤔" },
+  "Jaiho Arcade": { id: "YOUR_EMOJI_ID_7", emoji: "🤭" },
+  "Jaiho 777": { id: "6289348184669954042", emoji: "🤭" }, // এখানে আপনার জাইহোর আসল আইডি বসানো আছে
+  "Joy Rummy": { id: "YOUR_EMOJI_ID_9", emoji: "🪙" },
+  "Rummy888": { id: "YOUR_EMOJI_ID_10", emoji: "🎲" },
+  "Rummy 77": { id: "YOUR_EMOJI_ID_11", emoji: "♠️" },
+  "RummyLudo": { id: "YOUR_EMOJI_ID_12", emoji: "🎯" },
+  "777.Game": { id: "YOUR_EMOJI_ID_13", emoji: "💎" },
+  "OKRummy": { id: "YOUR_EMOJI_ID_14", emoji: "👑" },
+  "Hindi777": { id: "YOUR_EMOJI_ID_15", emoji: "⚡" },
+  "ClubINR": { id: "YOUR_EMOJI_ID_16", emoji: "🍀" },
+  "YesSpin": { id: "YOUR_EMOJI_ID_17", emoji: "🌀" },
+  "RumbleRummy": { id: "YOUR_EMOJI_ID_18", emoji: "🚀" },
+  "LoveRummy": { id: "YOUR_EMOJI_ID_19", emoji: "❤️" },
+  "ShareSlots": { id: "YOUR_EMOJI_ID_20", emoji: "🎁" },
+  "MahaGames": { id: "YOUR_EMOJI_ID_21", emoji: "🏆" },
+  "HiRummy": { id: "YOUR_EMOJI_ID_22", emoji: "✨" },
+  "JaihoWIN": { id: "YOUR_EMOJI_ID_23", emoji: "🎯" },
+  "INDCLUB": { id: "YOUR_EMOJI_ID_24", emoji: "🌟" }
 };
 
-// Function to automatically insert custom emojis safely (Will NOT break URLs or links)
+// Function to automatically insert the exact custom emoji matching your Telegram pack
 function addGameEmojis(text) {
   if (!text) return "";
   let updatedText = text;
   
-  for (const [gameName, emojiId] of Object.entries(gameEmojis)) {
-    // যদি আইডি না বসানো হয় বা placeholder থাকে, তবে স্কিপ করবে
-    if (!emojiId || emojiId.includes("YOUR_") || emojiId.includes("এখানে")) continue;
+  for (const [gameName, data] of Object.entries(gameEmojis)) {
+    if (!data.id || data.id.includes("YOUR_") || data.id.includes("এখানে")) continue;
     
     const escapedName = gameName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
     const regex = new RegExp(`(^|\\b|\\s)(${escapedName})(\\b|\\s|$)`, "gi");
     
     updatedText = updatedText.replace(regex, (match, p1, p2, p3, offset, string) => {
-      // লেখার পেছনের অংশ চেক করা হচ্ছে এটি কোনো ওয়েবসাইট লিংক (www বা http) কি না
       const precedingText = string.substring(Math.max(0, offset - 15), offset);
       if (/(www\.|https?:\/\/|\[|`)/i.test(precedingText)) {
-        return match; // যদি লিংক বা ইউআরএল হয়, তবে সেটিতে হাত দেবে না (অপরিবর্তিত রাখবে)
+        return match; // লিংকের ভেতরে ইমোজি বসাবে না
       }
-      return `${p1}<tg-emoji emoji-id="${emojiId}">☺️</tg-emoji> ${p2}${p3}`;
+      // প্যাকে সেভ করা নির্দিষ্ট ইমোজি এবং আইডি দিয়ে ট্যাগ তৈরি করবে
+      return `${p1}<tg-emoji emoji-id="${data.id}">${data.emoji}</tg-emoji> ${p2}${p3}`;
     });
   }
   return updatedText;
 }
+
 
 
 
