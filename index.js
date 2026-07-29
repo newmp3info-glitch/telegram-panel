@@ -8,6 +8,7 @@ const bot = new Telegraf(BOT_TOKEN);
 let channels = [];
 let scheduledPosts = [];
 
+// Load channel data
 if (fs.existsSync("channels.json")) {
   try {
     channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
@@ -16,6 +17,7 @@ if (fs.existsSync("channels.json")) {
   }
 }
 
+// Load schedule data
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
@@ -24,6 +26,7 @@ if (fs.existsSync("schedule.json")) {
   }
 }
 
+// State management variables
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
@@ -32,58 +35,7 @@ let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 💎 CUSTOM EMOJI MAPPING (আপনার প্যাকের আসল ইমোজি ও আইডি অনুযায়ী)
-const gameEmojis = {
-  "Jaiho 91": { id: "6289348184669954042", emoji: "🌼" }, // এখানে আপনার জাইহোর কাস্টম ইমোজির বেস ইমোজি বা প্রতীকটি বসিয়ে দিন
-  "INR Rummy": { id: "YOUR_EMOJI_ID_1", emoji: "🪙" },
-  "BOSS Rummy": { id: "YOUR_EMOJI_ID_2", emoji: "💰" },
-  "Ever777": { id: "YOUR_EMOJI_ID_3", emoji: "😛" },
-  "GameRummy": { id: "YOUR_EMOJI_ID_4", emoji: "😵‍💫" },
-  "Yono Rummy": { id: "YOUR_EMOJI_ID_5", emoji: "🌹" },
-  "Slots Winner": { id: "YOUR_EMOJI_ID_6", emoji: "🤔" },
-  "Jaiho Arcade": { id: "YOUR_EMOJI_ID_7", emoji: "🤭" },
-  "Joy Rummy": { id: "YOUR_EMOJI_ID_9", emoji: "🪙" },
-  "Rummy888": { id: "YOUR_EMOJI_ID_10", emoji: "🎲" },
-  "Rummy 77": { id: "YOUR_EMOJI_ID_11", emoji: "♠️" },
-  "RummyLudo": { id: "YOUR_EMOJI_ID_12", emoji: "🎯" },
-  "777.Game": { id: "YOUR_EMOJI_ID_13", emoji: "💎" },
-  "OKRummy": { id: "YOUR_EMOJI_ID_14", emoji: "👑" },
-  "Hindi777": { id: "YOUR_EMOJI_ID_15", emoji: "⚡" },
-  "ClubINR": { id: "YOUR_EMOJI_ID_16", emoji: "🍀" },
-  "YesSpin": { id: "YOUR_EMOJI_ID_17", emoji: "🌀" },
-  "RumbleRummy": { id: "YOUR_EMOJI_ID_18", emoji: "🚀" },
-  "LoveRummy": { id: "YOUR_EMOJI_ID_19", emoji: "❤️" },
-  "ShareSlots": { id: "YOUR_EMOJI_ID_20", emoji: "🎁" },
-  "MahaGames": { id: "YOUR_EMOJI_ID_21", emoji: "🏆" },
-  "HiRummy": { id: "YOUR_EMOJI_ID_22", emoji: "✨" },
-  "JaihoWIN": { id: "YOUR_EMOJI_ID_23", emoji: "🎯" },
-  "INDCLUB": { id: "YOUR_EMOJI_ID_24", emoji: "🌟" }
-};
-
-// Function to automatically insert your custom game emojis safely
-function addGameEmojis(text) {
-  if (!text) return "";
-  let updatedText = text;
-  
-  for (const [gameName, data] of Object.entries(gameEmojis)) {
-    if (!data.id || data.id.includes("YOUR_") || data.id.includes("এখানে")) continue;
-    
-    const escapedName = gameName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
-    const regex = new RegExp(`(^|\\b|\\s)(${escapedName})(\\b|\\s|$)`, "gi");
-    
-    updatedText = updatedText.replace(regex, (match, p1, p2, p3, offset, string) => {
-      const precedingText = string.substring(Math.max(0, offset - 15), offset);
-      if (/(www\.|https?:\/\/|\[|`)/i.test(precedingText)) {
-        return match; // লিংকের ভেতরে ট্যাগ বসাবে না
-      }
-      // টেলিগ্রামের অফিশিয়াল কাস্টম ইমোজি ট্যাগ
-      return `${p1}<tg-emoji emoji-id="${data.id}">${data.emoji}</tg-emoji> ${p2}${p3}`;
-    });
-  }
-  return updatedText;
-}
-
-
+// Main Menu Keyboard Layout
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post"],
@@ -109,11 +61,13 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
   let cleanedText = caption;
   
+  // Clean raw URLs if pasted by mistake
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -126,11 +80,10 @@ function processPost(caption) {
     });
   }
   
+  // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // গেমের নামের সাথে কাস্টম লোগো যুক্ত করা হচ্ছে
-  cleanedText = addGameEmojis(cleanedText);
-  
+  // 🎨 BUTTON COLORS: style "primary" (Blue like screenshot), style "success" (Green like screenshot)
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -146,6 +99,8 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
+
+// Admin verification middleware
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
   if (ctx.chat.type !== "private") return;
@@ -294,8 +249,7 @@ bot.on("text", async (ctx) => {
     const { channel, messageId } = editData[id];
     editStep[id] = null;
     try {
-      const formattedText = addGameEmojis(text);
-      await bot.telegram.editMessageCaption(channel, messageId, null, formattedText, { parse_mode: "HTML" });
+      await bot.telegram.editMessageCaption(channel, messageId, null, text, { parse_mode: "HTML" });
       ctx.reply("✅ Post Edited!");
     } catch (err) {
       ctx.reply(`❌ Failed to edit: ${err.message}`);
@@ -325,6 +279,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
+// Background Scheduler
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -347,7 +302,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched successfully with Custom Game Logo Tag.");
+  console.log("✅ Bot launched with Blue & Green Custom Grid successfully.");
 });
 
 const PORT = process.env.PORT || 10000;
