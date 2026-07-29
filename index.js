@@ -32,38 +32,41 @@ let editData = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 💎 CUSTOM EMOJI MAPPING FOR GAMES (আপনার গেমের নাম এবং আসল ইউনিক আইডি)
+// 💎 CUSTOM EMOJI MAPPING (আপনার প্যাকের আসল ইমোজি ও আইডি অনুযায়ী)
 const gameEmojis = {
-  "Jaiho 91": "6289348184669954042", // এখানে আপনার গেমের সঠিক আইডি দেওয়া আছে
-  "Joy Rummy": "YOUR_EMOJI_ID_2",
-  "INR Rummy": "YOUR_EMOJI_ID_3",
-  "BOSS Rummy": "YOUR_EMOJI_ID_4",
-  "Ever777": "YOUR_EMOJI_ID_5",
-  "Rummy888": "YOUR_EMOJI_ID_6",
-  "Rummy 77": "YOUR_EMOJI_ID_7",
-  "RummyLudo": "YOUR_EMOJI_ID_8",
-  "777.Game": "YOUR_EMOJI_ID_9",
-  "OKRummy": "YOUR_EMOJI_ID_10",
-  "Hindi777": "YOUR_EMOJI_ID_11",
-  "ClubINR": "YOUR_EMOJI_ID_12",
-  "GameRummy": "YOUR_EMOJI_ID_13",
-  "YesSpin": "YOUR_EMOJI_ID_14",
-  "RumbleRummy": "YOUR_EMOJI_ID_15",
-  "LoveRummy": "YOUR_EMOJI_ID_16",
-  "ShareSlots": "YOUR_EMOJI_ID_17",
-  "MahaGames": "YOUR_EMOJI_ID_18",
-  "HiRummy": "YOUR_EMOJI_ID_19",
-  "JaihoWIN": "YOUR_EMOJI_ID_20",
-  "INDCLUB": "YOUR_EMOJI_ID_21"
+  "Jaiho 91": { id: "6289348184669954042", emoji: "🌼" }, // এখানে আপনার জাইহোর কাস্টম ইমোজির বেস ইমোজি বা প্রতীকটি বসিয়ে দিন
+  "INR Rummy": { id: "YOUR_EMOJI_ID_1", emoji: "🪙" },
+  "BOSS Rummy": { id: "YOUR_EMOJI_ID_2", emoji: "💰" },
+  "Ever777": { id: "YOUR_EMOJI_ID_3", emoji: "😛" },
+  "GameRummy": { id: "YOUR_EMOJI_ID_4", emoji: "😵‍💫" },
+  "Yono Rummy": { id: "YOUR_EMOJI_ID_5", emoji: "🌹" },
+  "Slots Winner": { id: "YOUR_EMOJI_ID_6", emoji: "🤔" },
+  "Jaiho Arcade": { id: "YOUR_EMOJI_ID_7", emoji: "🤭" },
+  "Joy Rummy": { id: "YOUR_EMOJI_ID_9", emoji: "🪙" },
+  "Rummy888": { id: "YOUR_EMOJI_ID_10", emoji: "🎲" },
+  "Rummy 77": { id: "YOUR_EMOJI_ID_11", emoji: "♠️" },
+  "RummyLudo": { id: "YOUR_EMOJI_ID_12", emoji: "🎯" },
+  "777.Game": { id: "YOUR_EMOJI_ID_13", emoji: "💎" },
+  "OKRummy": { id: "YOUR_EMOJI_ID_14", emoji: "👑" },
+  "Hindi777": { id: "YOUR_EMOJI_ID_15", emoji: "⚡" },
+  "ClubINR": { id: "YOUR_EMOJI_ID_16", emoji: "🍀" },
+  "YesSpin": { id: "YOUR_EMOJI_ID_17", emoji: "🌀" },
+  "RumbleRummy": { id: "YOUR_EMOJI_ID_18", emoji: "🚀" },
+  "LoveRummy": { id: "YOUR_EMOJI_ID_19", emoji: "❤️" },
+  "ShareSlots": { id: "YOUR_EMOJI_ID_20", emoji: "🎁" },
+  "MahaGames": { id: "YOUR_EMOJI_ID_21", emoji: "🏆" },
+  "HiRummy": { id: "YOUR_EMOJI_ID_22", emoji: "✨" },
+  "JaihoWIN": { id: "YOUR_EMOJI_ID_23", emoji: "🎯" },
+  "INDCLUB": { id: "YOUR_EMOJI_ID_24", emoji: "🌟" }
 };
 
-// Function to automatically insert custom emojis using official Telegram HTML tag
+// Function to automatically insert your custom game emojis safely
 function addGameEmojis(text) {
   if (!text) return "";
   let updatedText = text;
   
-  for (const [gameName, emojiId] of Object.entries(gameEmojis)) {
-    if (!emojiId || emojiId.includes("YOUR_") || emojiId.includes("এখানে")) continue;
+  for (const [gameName, data] of Object.entries(gameEmojis)) {
+    if (!data.id || data.id.includes("YOUR_") || data.id.includes("এখানে")) continue;
     
     const escapedName = gameName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\s+/g, '\\s+');
     const regex = new RegExp(`(^|\\b|\\s)(${escapedName})(\\b|\\s|$)`, "gi");
@@ -73,12 +76,13 @@ function addGameEmojis(text) {
       if (/(www\.|https?:\/\/|\[|`)/i.test(precedingText)) {
         return match; // লিংকের ভেতরে ট্যাগ বসাবে না
       }
-      // টেলিগ্রামের অফিশিয়াল ট্যাগ ফরম্যাট, যা আপনার কাস্টম লোগোটিকে সরাসরি রেন্ডার করবে
-      return `${p1}<tg-emoji emoji-id="${emojiId}">💬</tg-emoji> ${p2}${p3}`;
+      // টেলিগ্রামের অফিশিয়াল কাস্টম ইমোজি ট্যাগ
+      return `${p1}<tg-emoji emoji-id="${data.id}">${data.emoji}</tg-emoji> ${p2}${p3}`;
     });
   }
   return updatedText;
 }
+
 
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
