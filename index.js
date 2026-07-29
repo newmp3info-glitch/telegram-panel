@@ -78,7 +78,7 @@ function addGameEmojis(text) {
       if (/(www\.|https?:\/\/|\[|`)/i.test(precedingText)) {
         return match; // যদি লিংক বা ইউআরএল হয়, তবে সেটিতে হাত দেবে না (অপরিবর্তিত রাখবে)
       }
-      return `${p1}<tg-emoji emoji-id="${emojiId}">🎮</tg-emoji> ${p2}${p3}`;
+      return `${p1}<tg-emoji emoji-id="${emojiId}">☺️</tg-emoji> ${p2}${p3}`;
     });
   }
   return updatedText;
