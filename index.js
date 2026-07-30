@@ -55,10 +55,11 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 📱 Bot Main Menu Keyboard (Total 7 Buttons: Row 1: 3, Row 2: 3, Row 3: 1)
+// 📱 Bot Main Menu Keyboard Layout (Left: 3 buttons, Right: 3 buttons, Bottom: 1 button)
 const mainKeyboard = Markup.keyboard([
-  ["📝 Create Post", "⏰ Schedule Post", "📋 Channel List"],
-  ["✏️ Edit Post", "🗑️ Delete Post", "➕ Add Channel"],
+  ["📝 Create Post", "⏰ Schedule Post"],
+  ["📋 Channel List", "✏️ Edit Post"],
+  ["🗑️ Delete Post", "➕ Add Channel"],
   ["❌ Remove Channel"]
 ]).resize();
 
@@ -88,7 +89,7 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC 5-BUTTON PARSER FOR CHANNEL POSTS (Row 1: 2, Row 2: 2, Row 3: 1)
+// 🤖 AUTOMATIC 5-BUTTON PARSER FOR CHANNEL POSTS
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
@@ -110,7 +111,7 @@ function processPost(caption) {
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 Exact 5 Original Post Buttons Layout
+  // 🎨 5 Inline Buttons Layout for Channel Posts
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
