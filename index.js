@@ -55,11 +55,12 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Main Menu Keyboard Layout (Home & Settings buttons removed, all original buttons kept)
+// Main Menu Keyboard Layout (Line 1: 2 buttons, Line 2: 3 buttons, Line 3: Add Channel, Line 4: Remove Channel at the very bottom)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post", "🗑️ Delete Post"],
-  ["➕ Add Channel", "❌ Remove Channel"]
+  ["➕ Add Channel"],
+  ["❌ Remove Channel"]
 ]).resize();
 
 function saveChannels() {
@@ -88,7 +89,7 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Line 1: 2 buttons, Line 2: 2 buttons, Line 3: 1 button at bottom)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
@@ -110,7 +111,7 @@ function processPost(caption) {
   // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green)
+  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green) + Extra button added at the bottom
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -119,6 +120,9 @@ function processPost(caption) {
     [
       { text: "👆 𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦 👆", url: "https://t.me/TotalYonoCode/3", style: "success" },
       { text: "​🤖 𝗣𝗿𝗼𝗺𝗼 𝗖𝗼𝗱𝗲 𝗕𝗼𝘁 🤖", url: "https://t.me/spin_crush_bot", style: "success" }
+    ],
+    [
+      { text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗮𝗿 𝗔𝗽𝗽 🔥", url: "https://www.fastyonoapp.online", style: "primary" }
     ]
   ];
   
