@@ -55,12 +55,11 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Main Menu Keyboard Layout (Edit Post & Delete Post buttons removed, Home & Settings kept)
+// Main Menu Keyboard Layout (Home & Settings buttons removed, all original buttons kept)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
-  ["📋 Channel List"],
-  ["➕ Add Channel", "❌ Remove Channel"],
-  ["🏠 Home", "⚙️ Settings"]
+  ["📋 Channel List", "✏️ Edit Post", "🗑️ Delete Post"],
+  ["➕ Add Channel", "❌ Remove Channel"]
 ]).resize();
 
 function saveChannels() {
@@ -140,11 +139,6 @@ bot.start((ctx) => {
   ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
 });
 
-bot.hears("🏠 Home", (ctx) => {
-  resetStates(ctx.from.id);
-  ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
-});
-
 bot.hears("➕ Add Channel", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -187,9 +181,21 @@ bot.hears("⏰ Schedule Post", (ctx) => {
   ctx.reply("⏰ **Send Photo with HTML Caption (Schedule Post)**");
 });
 
-bot.hears("⚙️ Settings", (ctx) => {
-  resetStates(ctx.from.id);
-  ctx.reply(`⚙️ Control Panel\n\n📢 Total Channels: ${channels.length}\n⏰ Scheduled Posts: ${scheduledPosts.length}`);
+bot.hears("✏️ Edit Post", (ctx) => {
+  const id = ctx.from.id;
+  resetStates(id);
+  if (channels.length === 0) return ctx.reply("❌ No channels found.");
+  editStep[id] = "waiting_new_text";
+  ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
+});
+
+// 🗑️ Delete Post Handler (Prompt for post text)
+bot.hears("🗑️ Delete Post", (ctx) => {
+  const id = ctx.from.id;
+  resetStates(id);
+  if (channels.length === 0) return ctx.reply("❌ No channels found.");
+  deleteStep[id] = "waiting_delete_text";
+  ctx.reply("🗑️ **Send the text (or caption) of the post you want to delete from all channels:**");
 });
 
 bot.on("photo", async (ctx) => {
@@ -406,7 +412,7 @@ setInterval(async () => {
 }, 30000);
 
 bot.launch().then(() => {
-  console.log("✅ Bot launched with Multi-Channel Bulk Add feature successfully.");
+  console.log("✅ Bot launched successfully.");
 });
 
 const PORT = process.env.PORT || 10000;
