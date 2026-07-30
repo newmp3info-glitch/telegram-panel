@@ -10,8 +10,7 @@ let scheduledPosts = [];
 let sentPostsHistory = [];
 let lastSentPosts = {};
 
-
-// Load channel data[span_1](start_span)[span_1](end_span)
+// Load channel data
 if (fs.existsSync("channels.json")) {
   try {
     channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
@@ -20,7 +19,7 @@ if (fs.existsSync("channels.json")) {
   }
 }
 
-// Load schedule data[span_2](start_span)[span_2](end_span)
+// Load schedule data
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
@@ -38,7 +37,7 @@ if (fs.existsSync("sent_history.json")) {
   }
 }
 
-// Load last sent post IDs for quick edit[span_3](start_span)[span_3](end_span)
+// Load last sent post IDs for quick edit
 if (fs.existsSync("last_posts.json")) {
   try {
     lastSentPosts = JSON.parse(fs.readFileSync("last_posts.json", "utf8"));
@@ -47,7 +46,7 @@ if (fs.existsSync("last_posts.json")) {
   }
 }
 
-// State management variables[span_4](start_span)[span_4](end_span)
+// State management variables
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
@@ -56,10 +55,10 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// Main Menu Keyboard Layout[span_5](start_span)[span_5](end_span)
+// Main Menu Keyboard Layout (Edit Post & Delete Post buttons removed, Home & Settings kept)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
-  ["📋 Channel List", "✏️ Edit Post", "🗑️ Delete Post"],
+  ["📋 Channel List"],
   ["➕ Add Channel", "❌ Remove Channel"],
   ["🏠 Home", "⚙️ Settings"]
 ]).resize();
@@ -90,13 +89,13 @@ function resetStates(id) {
   scheduleData[id] = null;
 }
 
-// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)[span_6](start_span)[span_6](end_span)
+// 🤖 AUTOMATIC HARDCODED BUTTON PARSER (Top: Blue, Bottom: Green)
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
   let cleanedText = caption;
   
-  // Clean raw URLs if pasted by mistake[span_7](start_span)[span_7](end_span)
+  // Clean raw URLs if pasted by mistake
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -109,10 +108,10 @@ function processPost(caption) {
     });
   }
   
-  // Clean up excessive blank lines[span_8](start_span)[span_8](end_span)
+  // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green)[span_9](start_span)[span_9](end_span)
+  // 🎨 BUTTON COLORS: style "primary" (Blue), style "success" (Green)
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -128,7 +127,7 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// Admin verification middleware[span_10](start_span)[span_10](end_span)
+// Admin verification middleware
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
   if (ctx.chat.type !== "private") return;
@@ -186,23 +185,6 @@ bot.hears("⏰ Schedule Post", (ctx) => {
   resetStates(id);
   scheduleStep[id] = "waiting_post";
   ctx.reply("⏰ **Send Photo with HTML Caption (Schedule Post)**");
-});
-
-bot.hears("✏️ Edit Post", (ctx) => {
-  const id = ctx.from.id;
-  resetStates(id);
-  if (channels.length === 0) return ctx.reply("❌ No channels found.");
-  editStep[id] = "waiting_new_text";
-  ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
-});
-
-// 🗑️ Delete Post Handler (Prompt for post text)
-bot.hears("🗑️ Delete Post", (ctx) => {
-  const id = ctx.from.id;
-  resetStates(id);
-  if (channels.length === 0) return ctx.reply("❌ No channels found.");
-  deleteStep[id] = "waiting_delete_text";
-  ctx.reply("🗑️ **Send the text (or caption) of the post you want to delete from all channels:**");
 });
 
 bot.hears("⚙️ Settings", (ctx) => {
@@ -374,7 +356,7 @@ bot.on("text", async (ctx) => {
         const fHour = String(hour).padStart(2, '0');
         const fMin = String(minute).padStart(2, '0');
 
-        // Indian Standard Time (+05:30) offset applied[span_11](start_span)[span_11](end_span)
+        // Indian Standard Time (+05:30) offset applied
         targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
       }
     }
@@ -389,7 +371,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler[span_12](start_span)[span_12](end_span)
+// Background Scheduler
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
