@@ -10,6 +10,7 @@ let scheduledPosts = [];
 let sentPostsHistory = [];
 let lastSentPosts = {};
 
+
 // Load channel data[span_1](start_span)[span_1](end_span)
 if (fs.existsSync("channels.json")) {
   try {
