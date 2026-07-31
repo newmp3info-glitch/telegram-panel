@@ -23,6 +23,13 @@ if (fs.existsSync("channels.json")) {
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
+    // Ensure every scheduled post has a unique ID
+    scheduledPosts = scheduledPosts.map(p => ({
+      id: p.id || (Date.now().toString() + Math.random().toString(36).substr(2, 9)),
+      file_id: p.file_id,
+      caption: p.caption,
+      time: p.time
+    }));
   } catch (e) {
     scheduledPosts = [];
   }
@@ -55,12 +62,13 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 📱 Bot Main Menu Keyboard Layout (Left: 3 buttons, Right: 3 buttons, Bottom: 1 button)
+// 📱 Bot Main Menu Keyboard Layout (Bottom button added for Scheduled Posts)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post"],
   ["🗑️ Delete Post", "➕ Add Channel"],
-  ["❌ Remove Channel"]
+  ["❌ Remove Channel"],
+  ["⏳ Scheduled Posts"]
 ]).resize();
 
 function saveChannels() {
@@ -171,6 +179,65 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
+// ⏳ Scheduled Posts Button Handler with Delete (❌) Inline Button
+bot.hears("⏳ Scheduled Posts", async (ctx) => {
+  resetStates(ctx.from.id);
+  if (scheduledPosts.length === 0) {
+    return ctx.reply("❌ No scheduled posts found.");
+  }
+  
+  await ctx.reply(`⏳ **Scheduled Posts List (${scheduledPosts.length}):**`);
+
+  for (const post of scheduledPosts) {
+    const postTime = new Date(post.time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    const captionText = `🕒 **Scheduled Time (IST):** ${postTime}\n\n${post.caption || ""}`;
+    
+    try {
+      await ctx.replyWithPhoto(post.file_id, {
+        caption: captionText,
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "❌ Delete Schedule", callback_data: `del_sched_${post.id}` }]
+          ]
+        }
+      });
+    } catch (err) {
+      await ctx.reply(captionText, {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "❌ Delete Schedule", callback_data: `del_sched_${post.id}` }]
+          ]
+        }
+      });
+    }
+  }
+});
+
+// Handle deletion of specific scheduled post via ❌ inline button
+bot.action(/^del_sched_(.+)$/, async (ctx) => {
+  const scheduleId = ctx.match[1];
+  const index = scheduledPosts.findIndex(p => p.id === scheduleId);
+  
+  if (index === -1) {
+    return ctx.answerCbQuery("❌ Scheduled post already deleted or not found!");
+  }
+
+  scheduledPosts.splice(index, 1);
+  saveSchedule();
+
+  await ctx.answerCbQuery("✅ Scheduled post deleted successfully!");
+  
+  try {
+    await ctx.deleteMessage();
+  } catch (err) {
+    try {
+      await ctx.editMessageCaption("❌ **[Deleted]** This scheduled post has been removed.");
+    } catch (e) {}
+  }
+});
+
 bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -242,7 +309,7 @@ bot.on("photo", async (ctx) => {
     const photos = ctx.message.photo;
     scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **30 09:00 AM**):");
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **01/08/2026, 09:00 am** or **30 09:00 AM**):");
   }
 });
 
@@ -335,8 +402,8 @@ bot.on("text", async (ctx) => {
     if (/^\d+$/.test(text)) {
       targetTime = new Date(Date.now() + parseInt(text) * 60 * 1000);
     } else {
-      const matchSimple = text.match(/^(\d{1,2})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
-      const matchFull = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})\s+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
+      const matchSimple = text.match(/^(\d{1,2})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
+      const matchFull = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
 
       let day, month, year, hour, minute, period;
       const now = new Date();
@@ -371,9 +438,10 @@ bot.on("text", async (ctx) => {
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `30 09:00 AM`).");
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `01/08/2026, 09:00 am`).");
 
-    scheduledPosts.push({ file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
+    const scheduleId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+    scheduledPosts.push({ id: scheduleId, file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
     saveSchedule();
     scheduleStep[id] = null;
     scheduleData[id] = null;
