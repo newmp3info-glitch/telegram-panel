@@ -179,43 +179,34 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
-// ⏳ Scheduled Posts Button Handler with Delete (❌) Inline Button
+// ⏳ Scheduled Posts Button Handler (Compact List View with Cross Delete Buttons)
 bot.hears("⏳ Scheduled Posts", async (ctx) => {
   resetStates(ctx.from.id);
   if (scheduledPosts.length === 0) {
     return ctx.reply("❌ No scheduled posts found.");
   }
   
-  await ctx.reply(`⏳ **Scheduled Posts List (${scheduledPosts.length}):**`);
+  let text = `⏳ **Scheduled Posts List (${scheduledPosts.length}):**\n\n`;
+  let inlineKeyboard = [];
 
-  for (const post of scheduledPosts) {
+  scheduledPosts.forEach((post, i) => {
     const postTime = new Date(post.time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-    const captionText = `🕒 **Scheduled Time (IST):** ${postTime}\n\n${post.caption || ""}`;
+    const shortCaption = post.caption ? (post.caption.length > 40 ? post.caption.substring(0, 40) + "..." : post.caption) : "Photo Post";
     
-    try {
-      await ctx.replyWithPhoto(post.file_id, {
-        caption: captionText,
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "❌ Delete Schedule", callback_data: `del_sched_${post.id}` }]
-          ]
-        }
-      });
-    } catch (err) {
-      await ctx.reply(captionText, {
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "❌ Delete Schedule", callback_data: `del_sched_${post.id}` }]
-          ]
-        }
-      });
-    }
-  }
+    text += `${i + 1}. 🕒 **Time:** ${postTime}\n📝 <i>${shortCaption}</i>\n\n`;
+    
+    inlineKeyboard.push([
+      { text: `❌ Delete Post #${i + 1}`, callback_data: `del_sched_${post.id}` }
+    ]);
+  });
+
+  await ctx.reply(text, {
+    parse_mode: "HTML",
+    reply_markup: { inline_keyboard: inlineKeyboard }
+  });
 });
 
-// Handle deletion of specific scheduled post via ❌ inline button
+// Handle deletion of specific scheduled post via ❌ inline button (Updates list instantly)
 bot.action(/^del_sched_(.+)$/, async (ctx) => {
   const scheduleId = ctx.match[1];
   const index = scheduledPosts.findIndex(p => p.id === scheduleId);
@@ -228,12 +219,31 @@ bot.action(/^del_sched_(.+)$/, async (ctx) => {
   saveSchedule();
 
   await ctx.answerCbQuery("✅ Scheduled post deleted successfully!");
-  
-  try {
-    await ctx.deleteMessage();
-  } catch (err) {
+
+  if (scheduledPosts.length === 0) {
     try {
-      await ctx.editMessageCaption("❌ **[Deleted]** This scheduled post has been removed.");
+      await ctx.editMessageText("❌ **All scheduled posts have been deleted. List is now empty.**", { parse_mode: "HTML" });
+    } catch (e) {}
+  } else {
+    let text = `⏳ **Scheduled Posts List (${scheduledPosts.length}):**\n\n`;
+    let inlineKeyboard = [];
+
+    scheduledPosts.forEach((post, i) => {
+      const postTime = new Date(post.time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+      const shortCaption = post.caption ? (post.caption.length > 40 ? post.caption.substring(0, 40) + "..." : post.caption) : "Photo Post";
+      
+      text += `${i + 1}. 🕒 **Time:** ${postTime}\n📝 <i>${shortCaption}</i>\n\n`;
+      
+      inlineKeyboard.push([
+        { text: `❌ Delete Post #${i + 1}`, callback_data: `del_sched_${post.id}` }
+      ]);
+    });
+
+    try {
+      await ctx.editMessageText(text, {
+        parse_mode: "HTML",
+        reply_markup: { inline_keyboard: inlineKeyboard }
+      });
     } catch (e) {}
   }
 });
