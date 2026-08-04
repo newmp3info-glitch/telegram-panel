@@ -130,7 +130,7 @@ function processPost(caption) {
       { text: "​🤖 𝗣𝗿𝗼𝗺𝗼 𝗖𝗼𝗱𝗲 𝗕𝗼𝘁 🤖", url: "https://t.me/spin_crush_bot", style: "success" }
     ],
     [
-      { text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗮𝗿 𝗔𝗽𝗽 🔥", url: "https://www.fastyonoapp.online", style: "primary" }
+      { text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗮𝗿 App 🔥", url: "https://www.fastyonoapp.online", style: "primary" }
     ]
   ];
   
@@ -459,8 +459,19 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler (Fixed to prevent skipping or deleting posts if channels are temporarily unavailable)
+// Background Scheduler (Auto-reloads channels & schedule to prevent missing posts after server restarts)
 setInterval(async () => {
+  if (fs.existsSync("channels.json")) {
+    try {
+      channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
+    } catch (e) {}
+  }
+  if (fs.existsSync("schedule.json")) {
+    try {
+      scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
+    } catch (e) {}
+  }
+
   if (scheduledPosts.length === 0 || channels.length === 0) return;
   const now = new Date();
   let hasChanges = false;
