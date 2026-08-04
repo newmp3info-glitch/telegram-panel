@@ -52,7 +52,7 @@ if (fs.existsSync("last_posts.json")) {
   }
 }
 
-// In-memory state management (Fast & Reliable)
+// State management variables
 let waitingChannel = {};
 let waitingRemove = {};
 let postStep = {};
@@ -101,6 +101,7 @@ function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
   let cleanedText = caption;
+  
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -174,6 +175,7 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
+// ⏳ Scheduled Posts Button Handler
 bot.hears("⏳ Scheduled Posts", async (ctx) => {
   resetStates(ctx.from.id);
   if (scheduledPosts.length === 0) {
@@ -279,7 +281,7 @@ bot.on("photo", async (ctx) => {
     const file = photos[photos.length - 1]; 
     const caption = ctx.message.caption || "";
 
-    resetStates(id);
+    postStep[id] = null;
     if (channels.length === 0) return ctx.reply("❌ No channels found.");
 
     const { text: cleanedCaption, replyMarkup } = processPost(caption);
@@ -309,12 +311,9 @@ bot.on("photo", async (ctx) => {
 
   if (scheduleStep[id] === "waiting_post") {
     const photos = ctx.message.photo;
-    scheduleData[id] = { 
-      file_id: photos[photos.length - 1].file_id, 
-      caption: ctx.message.caption || "" 
-    };
+    scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **04/08/2026, 11:30 am**):");
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **01/08/2026, 09:00 am** or **30 09:00 AM**):");
   }
 });
 
@@ -324,6 +323,7 @@ bot.on("text", async (ctx) => {
 
   if (waitingChannel[id]) {
     waitingChannel[id] = false;
+    
     const foundChannels = text.match(/@[^\s]+/g);
     if (!foundChannels || foundChannels.length === 0) {
       return ctx.reply("❌ No valid channel usernames found starting with '@'.");
@@ -402,11 +402,6 @@ bot.on("text", async (ctx) => {
   }
 
   if (scheduleStep[id] === "waiting_time") {
-    if (!scheduleData[id]) {
-      resetStates(id);
-      return ctx.reply("❌ Session expired. Please click '⏰ Schedule Post' and send the photo again.");
-    }
-
     let targetTime;
     if (/^\d+$/.test(text)) {
       targetTime = new Date(Date.now() + parseInt(text) * 60 * 1000);
@@ -446,23 +441,18 @@ bot.on("text", async (ctx) => {
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `04/08/2026, 11:30 am`).");
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `01/08/2026, 09:00 am`).");
 
     const scheduleId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    scheduledPosts.push({ 
-      id: scheduleId, 
-      file_id: scheduleData[id].file_id, 
-      caption: scheduleData[id].caption, 
-      time: targetTime.toISOString() 
-    });
+    scheduledPosts.push({ id: scheduleId, file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
     saveSchedule();
-    
-    resetStates(id);
-    return ctx.reply(`✅ Post Scheduled Successfully for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
+    scheduleStep[id] = null;
+    scheduleData[id] = null;
+    return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 });
 
-// Background Scheduler
+// Background Scheduler with Robust Error Handling & Execution Check
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -473,23 +463,21 @@ setInterval(async () => {
     if (new Date(post.time) <= now) {
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
       let channelMessages = {};
-
-      await Promise.allSettled(
-        channels.map(async (channel) => {
-          try {
-            const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
-              caption: cleanedCaption, 
-              parse_mode: "HTML", 
-              reply_markup: replyMarkup 
-            });
-            lastSentPosts[channel] = sentMsg.message_id;
-            channelMessages[channel] = sentMsg.message_id;
-          } catch (e) {
-            console.error(`Failed to send to ${channel}:`, e.message);
-          }
-        })
-      );
-
+      
+      for (const channel of channels) {
+        try {
+          const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
+            caption: cleanedCaption, 
+            parse_mode: "HTML", 
+            reply_markup: replyMarkup 
+          });
+          lastSentPosts[channel] = sentMsg.message_id;
+          channelMessages[channel] = sentMsg.message_id;
+        } catch (e) {
+          console.error(`Failed to send scheduled post to ${channel}:`, e.message);
+        }
+      }
+      
       sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
       if (sentPostsHistory.length > 50) sentPostsHistory.pop();
       saveSentHistory();
