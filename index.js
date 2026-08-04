@@ -1,4 +1,4 @@
-const { Telegraf, Markup } = require("telegraf");
+Const { Telegraf, Markup } = require("telegraf");
 const { BOT_TOKEN, ADMIN_ID } = require("./config");
 const http = require("http");
 const fs = require("fs");
@@ -459,7 +459,7 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler
+// Background Scheduler (Optimized with Promise.allSettled)
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
@@ -470,17 +470,23 @@ setInterval(async () => {
     if (new Date(post.time) <= now) {
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
       let channelMessages = {};
-      for (const channel of channels) {
-        try {
-          const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
-            caption: cleanedCaption, 
-            parse_mode: "HTML", 
-            reply_markup: replyMarkup 
-          });
-          lastSentPosts[channel] = sentMsg.message_id;
-          channelMessages[channel] = sentMsg.message_id;
-        } catch (e) {}
-      }
+
+      await Promise.allSettled(
+        channels.map(async (channel) => {
+          try {
+            const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
+              caption: cleanedCaption, 
+              parse_mode: "HTML", 
+              reply_markup: replyMarkup 
+            });
+            lastSentPosts[channel] = sentMsg.message_id;
+            channelMessages[channel] = sentMsg.message_id;
+          } catch (e) {
+            console.error(`Failed to send to ${channel}:`, e.message);
+          }
+        })
+      );
+
       sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
       if (sentPostsHistory.length > 50) sentPostsHistory.pop();
       saveSentHistory();
