@@ -1,4 +1,4 @@
-Const { Telegraf, Markup } = require("telegraf");
+const { Telegraf, Markup } = require("telegraf");
 const { BOT_TOKEN, ADMIN_ID } = require("./config");
 const http = require("http");
 const fs = require("fs");
