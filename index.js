@@ -5,18 +5,34 @@ const fs = require("fs");
 
 const bot = new Telegraf(BOT_TOKEN);
 
-let channels = [];
+// Permanent Default Channels (So they never get lost even if Render resets files)
+let channels = [
+  "@vipyonofreecode",
+  "@allyonorummycode",
+  "@totalyonocode",
+  "@fullyonocode",
+  "@superyonocode",
+  "@LootYonoCode",
+  "@FastYonoCode",
+  "@RealYonoCode",
+  "@VipFreeYonoCode",
+  "@WinRummynet"
+];
+
 let scheduledPosts = [];
 let sentPostsHistory = [];
 let lastSentPosts = {};
 
-// Load channel data
+// Load channel data if exists, otherwise save default channels
 if (fs.existsSync("channels.json")) {
   try {
-    channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
-  } catch (e) {
-    channels = [];
-  }
+    const loadedChannels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
+    if (Array.isArray(loadedChannels) && loadedChannels.length > 0) {
+      channels = loadedChannels;
+    }
+  } catch (e) {}
+} else {
+  saveChannels();
 }
 
 // Load schedule data
