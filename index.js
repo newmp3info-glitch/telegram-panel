@@ -23,6 +23,7 @@ if (fs.existsSync("channels.json")) {
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
+    // Ensure every scheduled post has a unique ID
     scheduledPosts = scheduledPosts.map(p => ({
       id: p.id || (Date.now().toString() + Math.random().toString(36).substr(2, 9)),
       file_id: p.file_id,
@@ -61,7 +62,7 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 📱 Bot Main Menu Keyboard Layout
+// 📱 Bot Main Menu Keyboard Layout (Bottom button added for Scheduled Posts)
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post"],
@@ -102,6 +103,7 @@ function processPost(caption) {
   
   let cleanedText = caption;
   
+  // Clean raw URLs if pasted by mistake
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -114,8 +116,10 @@ function processPost(caption) {
     });
   }
   
+  // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
+  // 🎨 5 Inline Buttons Layout for Channel Posts
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -175,7 +179,7 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
-// ⏳ Scheduled Posts Button Handler
+// ⏳ Scheduled Posts Button Handler (Compact List View with Cross Delete Buttons)
 bot.hears("⏳ Scheduled Posts", async (ctx) => {
   resetStates(ctx.from.id);
   if (scheduledPosts.length === 0) {
@@ -202,6 +206,7 @@ bot.hears("⏳ Scheduled Posts", async (ctx) => {
   });
 });
 
+// Handle deletion of specific scheduled post via ❌ inline button (Updates list instantly)
 bot.action(/^del_sched_(.+)$/, async (ctx) => {
   const scheduleId = ctx.match[1];
   const index = scheduledPosts.findIndex(p => p.id === scheduleId);
@@ -265,6 +270,7 @@ bot.hears("✏️ Edit Post", (ctx) => {
   ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
 });
 
+// 🗑️ Delete Post Handler (Prompt for post text)
 bot.hears("🗑️ Delete Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -437,6 +443,7 @@ bot.on("text", async (ctx) => {
         const fHour = String(hour).padStart(2, '0');
         const fMin = String(minute).padStart(2, '0');
 
+        // Indian Standard Time (+05:30) offset applied
         targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
       }
     }
@@ -452,9 +459,9 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler with Robust Error Handling & Execution Check
+// Background Scheduler (Fixed to prevent skipping or deleting posts if channels are temporarily unavailable)
 setInterval(async () => {
-  if (scheduledPosts.length === 0) return;
+  if (scheduledPosts.length === 0 || channels.length === 0) return;
   const now = new Date();
   let hasChanges = false;
 
@@ -463,7 +470,8 @@ setInterval(async () => {
     if (new Date(post.time) <= now) {
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
       let channelMessages = {};
-      
+      let sentSuccessfully = false;
+
       for (const channel of channels) {
         try {
           const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
@@ -473,18 +481,19 @@ setInterval(async () => {
           });
           lastSentPosts[channel] = sentMsg.message_id;
           channelMessages[channel] = sentMsg.message_id;
-        } catch (e) {
-          console.error(`Failed to send scheduled post to ${channel}:`, e.message);
-        }
+          sentSuccessfully = true;
+        } catch (e) {}
       }
-      
-      sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
-      if (sentPostsHistory.length > 50) sentPostsHistory.pop();
-      saveSentHistory();
-      saveLastPosts();
-      
-      scheduledPosts.splice(i, 1);
-      hasChanges = true;
+
+      if (sentSuccessfully) {
+        sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
+        if (sentPostsHistory.length > 50) sentPostsHistory.pop();
+        saveSentHistory();
+        saveLastPosts();
+        
+        scheduledPosts.splice(i, 1);
+        hasChanges = true;
+      }
     }
   }
   if (hasChanges) saveSchedule();
