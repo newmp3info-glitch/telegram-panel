@@ -459,20 +459,9 @@ bot.on("text", async (ctx) => {
   }
 });
 
-// Background Scheduler (Auto-reloads channels & schedule to prevent missing posts after server restarts)
+// Background Scheduler
 setInterval(async () => {
-  if (fs.existsSync("channels.json")) {
-    try {
-      channels = JSON.parse(fs.readFileSync("channels.json", "utf8"));
-    } catch (e) {}
-  }
-  if (fs.existsSync("schedule.json")) {
-    try {
-      scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
-    } catch (e) {}
-  }
-
-  if (scheduledPosts.length === 0 || channels.length === 0) return;
+  if (scheduledPosts.length === 0) return;
   const now = new Date();
   let hasChanges = false;
 
@@ -481,8 +470,6 @@ setInterval(async () => {
     if (new Date(post.time) <= now) {
       const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
       let channelMessages = {};
-      let sentSuccessfully = false;
-
       for (const channel of channels) {
         try {
           const sentMsg = await bot.telegram.sendPhoto(channel, post.file_id, { 
@@ -492,19 +479,15 @@ setInterval(async () => {
           });
           lastSentPosts[channel] = sentMsg.message_id;
           channelMessages[channel] = sentMsg.message_id;
-          sentSuccessfully = true;
         } catch (e) {}
       }
-
-      if (sentSuccessfully) {
-        sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
-        if (sentPostsHistory.length > 50) sentPostsHistory.pop();
-        saveSentHistory();
-        saveLastPosts();
-        
-        scheduledPosts.splice(i, 1);
-        hasChanges = true;
-      }
+      sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
+      if (sentPostsHistory.length > 50) sentPostsHistory.pop();
+      saveSentHistory();
+      saveLastPosts();
+      
+      scheduledPosts.splice(i, 1);
+      hasChanges = true;
     }
   }
   if (hasChanges) saveSchedule();
