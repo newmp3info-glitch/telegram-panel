@@ -23,7 +23,6 @@ if (fs.existsSync("channels.json")) {
 if (fs.existsSync("schedule.json")) {
   try {
     scheduledPosts = JSON.parse(fs.readFileSync("schedule.json", "utf8"));
-    // Ensure every scheduled post has a unique ID
     scheduledPosts = scheduledPosts.map(p => ({
       id: p.id || (Date.now().toString() + Math.random().toString(36).substr(2, 9)),
       file_id: p.file_id,
@@ -62,7 +61,7 @@ let deleteStep = {};
 let scheduleStep = {};
 let scheduleData = {};
 
-// 📱 Bot Main Menu Keyboard Layout (Bottom button added for Scheduled Posts)
+// 📱 Bot Main Menu Keyboard Layout
 const mainKeyboard = Markup.keyboard([
   ["📝 Create Post", "⏰ Schedule Post"],
   ["📋 Channel List", "✏️ Edit Post"],
@@ -102,8 +101,6 @@ function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
   
   let cleanedText = caption;
-  
-  // Clean raw URLs if pasted by mistake
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
   
@@ -116,10 +113,8 @@ function processPost(caption) {
     });
   }
   
-  // Clean up excessive blank lines
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
   
-  // 🎨 5 Inline Buttons Layout for Channel Posts
   const inlineKeyboard = [
     [
       { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
@@ -179,7 +174,6 @@ bot.hears("❌ Remove Channel", (ctx) => {
   ctx.reply(text);
 });
 
-// ⏳ Scheduled Posts Button Handler (Compact List View with Cross Delete Buttons)
 bot.hears("⏳ Scheduled Posts", async (ctx) => {
   resetStates(ctx.from.id);
   if (scheduledPosts.length === 0) {
@@ -206,7 +200,6 @@ bot.hears("⏳ Scheduled Posts", async (ctx) => {
   });
 });
 
-// Handle deletion of specific scheduled post via ❌ inline button (Updates list instantly)
 bot.action(/^del_sched_(.+)$/, async (ctx) => {
   const scheduleId = ctx.match[1];
   const index = scheduledPosts.findIndex(p => p.id === scheduleId);
@@ -270,7 +263,6 @@ bot.hears("✏️ Edit Post", (ctx) => {
   ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
 });
 
-// 🗑️ Delete Post Handler (Prompt for post text)
 bot.hears("🗑️ Delete Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
@@ -319,7 +311,7 @@ bot.on("photo", async (ctx) => {
     const photos = ctx.message.photo;
     scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **01/08/2026, 09:00 am** or **30 09:00 AM**):");
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **04/08/2026, 11:01 am**):");
   }
 });
 
@@ -329,7 +321,6 @@ bot.on("text", async (ctx) => {
 
   if (waitingChannel[id]) {
     waitingChannel[id] = false;
-    
     const foundChannels = text.match(/@[^\s]+/g);
     if (!foundChannels || foundChannels.length === 0) {
       return ctx.reply("❌ No valid channel usernames found starting with '@'.");
@@ -408,6 +399,12 @@ bot.on("text", async (ctx) => {
   }
 
   if (scheduleStep[id] === "waiting_time") {
+    // Safety check so bot never crashes if session data is lost
+    if (!scheduleData[id]) {
+      scheduleStep[id] = null;
+      return ctx.reply("❌ Session expired or photo missing. Please click '⏰ Schedule Post' and send the photo again.");
+    }
+
     let targetTime;
     if (/^\d+$/.test(text)) {
       targetTime = new Date(Date.now() + parseInt(text) * 60 * 1000);
@@ -443,23 +440,23 @@ bot.on("text", async (ctx) => {
         const fHour = String(hour).padStart(2, '0');
         const fMin = String(minute).padStart(2, '0');
 
-        // Indian Standard Time (+05:30) offset applied
         targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `01/08/2026, 09:00 am`).");
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `04/08/2026, 11:01 am`).");
 
     const scheduleId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     scheduledPosts.push({ id: scheduleId, file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
     saveSchedule();
+    
     scheduleStep[id] = null;
     scheduleData[id] = null;
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 });
 
-// Background Scheduler (Optimized with Promise.allSettled)
+// Background Scheduler
 setInterval(async () => {
   if (scheduledPosts.length === 0) return;
   const now = new Date();
