@@ -5,7 +5,16 @@ const fs = require("fs");
 
 const bot = new Telegraf(BOT_TOKEN);
 
-let channels = [];
+let channels = [@vipyonofreecode
+@allyonorummycode
+@totalyonocode
+@fullyonocode
+@superyonocode
+@LootYonoCode
+@FastYonoCode
+@RealYonoCode
+@VipFreeYonoCode
+@WinRummynet];
 let scheduledPosts = [];
 let sentPostsHistory = [];
 let lastSentPosts = {};
