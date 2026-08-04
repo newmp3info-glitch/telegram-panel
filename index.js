@@ -9,6 +9,7 @@ let channels = [];
 let scheduledPosts = [];
 let sentPostsHistory = [];
 let lastSentPosts = {};
+let userStates = {};
 
 // Load channel data
 if (fs.existsSync("channels.json")) {
@@ -52,23 +53,14 @@ if (fs.existsSync("last_posts.json")) {
   }
 }
 
-// State management variables
-let waitingChannel = {};
-let waitingRemove = {};
-let postStep = {};
-let editStep = {};
-let deleteStep = {};
-let scheduleStep = {};
-let scheduleData = {};
-
-// 📱 Bot Main Menu Keyboard Layout
-const mainKeyboard = Markup.keyboard([
-  ["📝 Create Post", "⏰ Schedule Post"],
-  ["📋 Channel List", "✏️ Edit Post"],
-  ["🗑️ Delete Post", "➕ Add Channel"],
-  ["❌ Remove Channel"],
-  ["⏳ Scheduled Posts"]
-]).resize();
+// Load user states to prevent data loss on server refresh
+if (fs.existsSync("states.json")) {
+  try {
+    userStates = JSON.parse(fs.readFileSync("states.json", "utf8"));
+  } catch (e) {
+    userStates = {};
+  }
+}
 
 function saveChannels() {
   fs.writeFileSync("channels.json", JSON.stringify(channels, null, 2));
@@ -86,15 +78,32 @@ function saveLastPosts() {
   fs.writeFileSync("last_posts.json", JSON.stringify(lastSentPosts, null, 2));
 }
 
-function resetStates(id) {
-  waitingChannel[id] = false;
-  waitingRemove[id] = false;
-  postStep[id] = null;
-  editStep[id] = null;
-  deleteStep[id] = null;
-  scheduleStep[id] = null;
-  scheduleData[id] = null;
+function saveStates() {
+  fs.writeFileSync("states.json", JSON.stringify(userStates, null, 2));
 }
+
+function getState(id) {
+  return userStates[id] || { step: null, data: null };
+}
+
+function setState(id, step, data = null) {
+  userStates[id] = { step, data };
+  saveStates();
+}
+
+function clearState(id) {
+  delete userStates[id];
+  saveStates();
+}
+
+// 📱 Bot Main Menu Keyboard Layout
+const mainKeyboard = Markup.keyboard([
+  ["📝 Create Post", "⏰ Schedule Post"],
+  ["📋 Channel List", "✏️ Edit Post"],
+  ["🗑️ Delete Post", "➕ Add Channel"],
+  ["❌ Remove Channel"],
+  ["⏳ Scheduled Posts"]
+]).resize();
 
 // 🤖 AUTOMATIC 5-BUTTON PARSER FOR CHANNEL POSTS
 function processPost(caption) {
@@ -142,19 +151,18 @@ bot.use(async (ctx, next) => {
 });
 
 bot.start((ctx) => {
-  resetStates(ctx.from.id);
+  clearState(ctx.from.id);
   ctx.reply("🏠 Telegram Control Panel", mainKeyboard);
 });
 
 bot.hears("➕ Add Channel", (ctx) => {
   const id = ctx.from.id;
-  resetStates(id);
-  waitingChannel[id] = true;
+  setState(id, "waiting_channel");
   ctx.reply("📢 Send all channel usernames together (one per line or space separated):");
 });
 
 bot.hears("📋 Channel List", (ctx) => {
-  resetStates(ctx.from.id);
+  clearState(ctx.from.id);
   if (channels.length === 0) return ctx.reply("❌ No Channel Added");
   let text = "📋 Channel List\n\n";
   channels.forEach((ch, i) => { text += `${i + 1}. ${ch}\n`; });
@@ -163,10 +171,9 @@ bot.hears("📋 Channel List", (ctx) => {
 
 bot.hears("❌ Remove Channel", (ctx) => {
   const id = ctx.from.id;
-  resetStates(id);
-  waitingRemove[id] = true;
+  setState(id, "waiting_remove");
   if (channels.length === 0) {
-    waitingRemove[id] = false;
+    clearState(id);
     return ctx.reply("❌ No Channel Found");
   }
   let text = "Send Channel Username to Remove:\n\n";
@@ -175,7 +182,7 @@ bot.hears("❌ Remove Channel", (ctx) => {
 });
 
 bot.hears("⏳ Scheduled Posts", async (ctx) => {
-  resetStates(ctx.from.id);
+  clearState(ctx.from.id);
   if (scheduledPosts.length === 0) {
     return ctx.reply("❌ No scheduled posts found.");
   }
@@ -243,43 +250,40 @@ bot.action(/^del_sched_(.+)$/, async (ctx) => {
 
 bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
-  resetStates(id);
-  postStep[id] = "waiting_post";
+  setState(id, "waiting_post");
   ctx.reply("📷 **Send Photo with HTML Caption (Instant Post)**");
 });
 
 bot.hears("⏰ Schedule Post", (ctx) => {
   const id = ctx.from.id;
-  resetStates(id);
-  scheduleStep[id] = "waiting_post";
+  setState(id, "waiting_schedule_post");
   ctx.reply("⏰ **Send Photo with HTML Caption (Schedule Post)**");
 });
 
 bot.hears("✏️ Edit Post", (ctx) => {
   const id = ctx.from.id;
-  resetStates(id);
+  setState(id, "waiting_new_text");
   if (channels.length === 0) return ctx.reply("❌ No channels found.");
-  editStep[id] = "waiting_new_text";
   ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
 });
 
 bot.hears("🗑️ Delete Post", (ctx) => {
   const id = ctx.from.id;
-  resetStates(id);
+  setState(id, "waiting_delete_text");
   if (channels.length === 0) return ctx.reply("❌ No channels found.");
-  deleteStep[id] = "waiting_delete_text";
   ctx.reply("🗑️ **Send the text (or caption) of the post you want to delete from all channels:**");
 });
 
 bot.on("photo", async (ctx) => {
   const id = ctx.from.id;
+  const state = getState(id);
 
-  if (postStep[id] === "waiting_post") {
+  if (state.step === "waiting_post") {
     const photos = ctx.message.photo;
     const file = photos[photos.length - 1]; 
     const caption = ctx.message.caption || "";
 
-    postStep[id] = null;
+    clearState(id);
     if (channels.length === 0) return ctx.reply("❌ No channels found.");
 
     const { text: cleanedCaption, replyMarkup } = processPost(caption);
@@ -307,20 +311,23 @@ bot.on("photo", async (ctx) => {
     return ctx.reply(`✅ Post Completed & Saved for Quick Edit/Delete\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  if (scheduleStep[id] === "waiting_post") {
+  if (state.step === "waiting_schedule_post") {
     const photos = ctx.message.photo;
-    scheduleData[id] = { file_id: photos[photos.length - 1].file_id, caption: ctx.message.caption || "" };
-    scheduleStep[id] = "waiting_time";
-    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **04/08/2026, 11:01 am**):");
+    const fileId = photos[photos.length - 1].file_id;
+    const caption = ctx.message.caption || "";
+    
+    setState(id, "waiting_schedule_time", { file_id: fileId, caption: caption });
+    return ctx.reply("📷 Photo Received! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **04/08/2026, 11:13 am**):");
   }
 });
 
 bot.on("text", async (ctx) => {
   const id = ctx.from.id;
   const text = ctx.message.text.trim();
+  const state = getState(id);
 
-  if (waitingChannel[id]) {
-    waitingChannel[id] = false;
+  if (state.step === "waiting_channel") {
+    clearState(id);
     const foundChannels = text.match(/@[^\s]+/g);
     if (!foundChannels || foundChannels.length === 0) {
       return ctx.reply("❌ No valid channel usernames found starting with '@'.");
@@ -343,8 +350,8 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ **Channels Added Successfully!**\n\n➕ Newly Added: ${addedCount}\n⚠️ Already Exists: ${alreadyCount}\n📢 Total Channels Now: ${channels.length}`);
   }
 
-  if (waitingRemove[id]) {
-    waitingRemove[id] = false;
+  if (state.step === "waiting_remove") {
+    clearState(id);
     const index = channels.indexOf(text);
     if (index === -1) return ctx.reply("❌ Channel Not Found");
     channels.splice(index, 1);
@@ -352,8 +359,8 @@ bot.on("text", async (ctx) => {
     return ctx.reply("✅ Channel Removed");
   }
 
-  if (editStep[id] === "waiting_new_text") {
-    editStep[id] = null;
+  if (state.step === "waiting_new_text") {
+    clearState(id);
     const { text: cleanedCaption, replyMarkup } = processPost(text);
     let success = 0, failed = 0;
 
@@ -375,8 +382,8 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ **All Channel Posts Edited Successfully!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  if (deleteStep[id] === "waiting_delete_text") {
-    deleteStep[id] = null;
+  if (state.step === "waiting_delete_text") {
+    clearState(id);
     const targetPostIndex = sentPostsHistory.findIndex(p => p.text.includes(text) || text.includes(p.text.substring(0, 15)));
     if (targetPostIndex === -1) {
       return ctx.reply("❌ No matching sent post found with this text! Please make sure you paste the correct caption text.");
@@ -398,10 +405,9 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  if (scheduleStep[id] === "waiting_time") {
-    // Safety check so bot never crashes if session data is lost
-    if (!scheduleData[id]) {
-      scheduleStep[id] = null;
+  if (state.step === "waiting_schedule_time") {
+    if (!state.data) {
+      clearState(id);
       return ctx.reply("❌ Session expired or photo missing. Please click '⏰ Schedule Post' and send the photo again.");
     }
 
@@ -444,14 +450,13 @@ bot.on("text", async (ctx) => {
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `04/08/2026, 11:01 am`).");
+    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format! Use minutes (e.g., `30`) or Date & Time (e.g., `04/08/2026, 11:13 am`).");
 
     const scheduleId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    scheduledPosts.push({ id: scheduleId, file_id: scheduleData[id].file_id, caption: scheduleData[id].caption, time: targetTime.toISOString() });
+    scheduledPosts.push({ id: scheduleId, file_id: state.data.file_id, caption: state.data.caption, time: targetTime.toISOString() });
     saveSchedule();
     
-    scheduleStep[id] = null;
-    scheduleData[id] = null;
+    clearState(id);
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 });
