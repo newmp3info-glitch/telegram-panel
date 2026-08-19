@@ -126,7 +126,7 @@ function processPost(caption) {
       { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "primary" }
     ],
     [
-      { text: "👆 𝗔𝗟𝗟 𝗚𝗔𝗠𝗘𝗦 👆", url: "https://t.me/TotalYonoCode/3", style: "success" },
+      { text: " 🤖 𝗬𝗼𝗻𝗼 𝗔𝗜 𝗕𝗼𝘁 🤖", url: "https://t.me/YonoGamingHeadAIBot", style: "success" },
       { text: "​🤖 𝗣𝗿𝗼𝗺𝗼 𝗖𝗼𝗱𝗲 𝗕𝗼𝘁 🤖", url: "https://t.me/spin_crush_bot", style: "success" }
     ],
     [
