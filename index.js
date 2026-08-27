@@ -130,7 +130,7 @@ function processPost(caption) {
       { text: "​🤖 𝗣𝗿𝗼𝗺𝗼 𝗖𝗼𝗱𝗲 𝗕𝗼𝘁 🤖", url: "https://t.me/spin_crush_bot", style: "success" }
     ],
     [
-      { text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗮𝗿 𝗔𝗽𝗽 🔥", url: "https://www.fastyonoapp.online", style: "primary" }
+      { text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗲𝗿 𝗔𝗽𝗽 🔥", url: "https://www.fastyonoapp.online", style: "primary" }
     ]
   ];
   
