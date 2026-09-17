@@ -135,38 +135,75 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// 🔍 Smart Dynamic Image Mapper
+// 🔍 Exact 59 Image Filenames Mapping (100% Hardcoded to prevent missing images)
 function getImageUrlFromText(postText) {
+  const textLower = postText.toLowerCase();
+  
   const repoOwner = "newmp3info-glitch"; 
   const repoName = "telegram-panel";
   const branch = "main";
 
-  let cleanText = postText.replace(/<[^>]*>/g, '');
-  let titleLine = cleanText.split('➝')[0] || cleanText.split('\n')[0] || '';
-  
-  let normalized = titleLine
-    .toLowerCase()
-    .replace(/[^\w\s]/gi, '')
-    .trim()
-    .replace(/\s+/g, '-');
+  let imageName = "yono-rummy.jpg"; // Default fallback
 
-  let imageName = normalized + '.jpg';
-
-  const exceptions = {
-    'jaiho-slots': 'jaihoslots.jpg',
-    'jaiho-spin': 'jaihospin.jpg',
-    'yono-shots': 'yono-slots.jpg',
-    'jaiho-shots': 'jaihoslots.jpg',
-    'ind-shots': 'ind-slots.jpg',
-    '101z': '101-z.jpg',
-    '567slots': '567-slots.jpg',
-    '789jackpots': '789-jackpots.jpg',
-    '777game': '777-game.jpg'
-  };
-
-  if (exceptions[normalized]) {
-    imageName = exceptions[normalized];
-  }
+       if (textLower.includes("101-z") || textLower.includes("101z")) imageName = "101-z.jpg";
+  else if (textLower.includes("567-slots") || textLower.includes("567slots")) imageName = "567-slots.jpg";
+  else if (textLower.includes("777-game") || textLower.includes("777game")) imageName = "777-game.jpg";
+  else if (textLower.includes("789-jackpots") || textLower.includes("789jackpots")) imageName = "789-jackpots.jpg";
+  else if (textLower.includes("abc rummy") || textLower.includes("abc-rummy")) imageName = "abc-rummy.jpg";
+  else if (textLower.includes("bet-213") || textLower.includes("bet213")) imageName = "bet-213.jpg";
+  else if (textLower.includes("bingo-101") || textLower.includes("bingo101")) imageName = "bingo-101.jpg";
+  else if (textLower.includes("boss rummy") || textLower.includes("boss-rummy")) imageName = "boss-rummy.jpg";
+  else if (textLower.includes("club inr") || textLower.includes("club-inr")) imageName = "club-inr.jpg";
+  else if (textLower.includes("dhan game") || textLower.includes("dhan-game")) imageName = "dhan-game.jpg";
+  else if (textLower.includes("ever 777") || textLower.includes("ever-777")) imageName = "ever-777.jpg";
+  else if (textLower.includes("game rummy") || textLower.includes("game-rummy")) imageName = "game-rummy.jpg";
+  else if (textLower.includes("gogo rummy") || textLower.includes("gogo-rummy")) imageName = "gogo-rummy.jpg";
+  else if (textLower.includes("gold rummy") || textLower.includes("gold-rummy")) imageName = "gold-rummy.jpg";
+  else if (textLower.includes("hi rummy") || textLower.includes("hi-rummy")) imageName = "hi-rummy.jpg";
+  else if (textLower.includes("hindi 777") || textLower.includes("hindi-777")) imageName = "hindi-777.jpg";
+  else if (textLower.includes("ind club") || textLower.includes("ind-club")) imageName = "ind-club.jpg";
+  else if (textLower.includes("ind rummy") || textLower.includes("ind-rummy")) imageName = "ind-rummy.jpg";
+  else if (textLower.includes("ind slots") || textLower.includes("ind-slots")) imageName = "ind-slots.jpg";
+  else if (textLower.includes("inr rummy") || textLower.includes("inr-rummy")) imageName = "inr-rummy.jpg";
+  else if (textLower.includes("jaiho 777") || textLower.includes("jaiho-777-vip")) imageName = "jaiho-777-vip.jpg";
+  else if (textLower.includes("jaiho 91") || textLower.includes("jaiho-91")) imageName = "jaiho-91.jpg";
+  else if (textLower.includes("jaiho arcade") || textLower.includes("jaiho-arcade")) imageName = "jaiho-arcade.jpg";
+  else if (textLower.includes("jaiho rummy") || textLower.includes("jaiho-rummy")) imageName = "jaiho-rummy.jpg";
+  else if (textLower.includes("jaiho slots") || textLower.includes("jaihoslots") || textLower.includes("jaiho-slots")) imageName = "jaiho-slots.jpg";
+  else if (textLower.includes("jaiho spin") || textLower.includes("jaihospin") || textLower.includes("jaiho-spin")) imageName = "jaiho-spin.jpg";
+  else if (textLower.includes("jaiho win") || textLower.includes("jaiho-win")) imageName = "jaiho-win.jpg";
+  else if (textLower.includes("joy rummy") || textLower.includes("joy-rummy")) imageName = "joy-rummy.jpg";
+  else if (textLower.includes("love rummy") || textLower.includes("love-rummy")) imageName = "love-rummy.jpg";
+  else if (textLower.includes("maha games") || textLower.includes("maha-games")) imageName = "maha-games.jpg";
+  else if (textLower.includes("max rummy") || textLower.includes("max-rummy")) imageName = "max-rummy.jpg";
+  else if (textLower.includes("mbm bet") || textLower.includes("mbm-bet")) imageName = "mbm-bet.jpg";
+  else if (textLower.includes("money rummy") || textLower.includes("money-rummy")) imageName = "money-rummy.jpg";
+  else if (textLower.includes("neta vip") || textLower.includes("neta-vip")) imageName = "neta-vip.jpg";
+  else if (textLower.includes("ok rummy") || textLower.includes("ok-rummy")) imageName = "ok-rummy.jpg";
+  else if (textLower.includes("rumble rummy") || textLower.includes("rumble-rummy")) imageName = "rumble-rummy.jpg";
+  else if (textLower.includes("rummy 77") || textLower.includes("rummy-77")) imageName = "rummy-77.jpg";
+  else if (textLower.includes("rummy 888") || textLower.includes("rummy-888")) imageName = "rummy-888.jpg";
+  else if (textLower.includes("rummy 91") || textLower.includes("rummy-91")) imageName = "rummy-91.jpg";
+  else if (textLower.includes("rummy ludo") || textLower.includes("rummy-ludo")) imageName = "rummy-ludo.jpg";
+  else if (textLower.includes("saga slots") || textLower.includes("saga-slots")) imageName = "saga-slots.jpg";
+  else if (textLower.includes("share slots") || textLower.includes("share-slots")) imageName = "share-slots.jpg";
+  else if (textLower.includes("slots spin") || textLower.includes("slots-spin")) imageName = "slots-spin.jpg";
+  else if (textLower.includes("slots winner") || textLower.includes("slots-winner")) imageName = "slots-winner.jpg";
+  else if (textLower.includes("spin 101") || textLower.includes("spin101")) imageName = "spin-101.jpg";
+  else if (textLower.includes("spin 777") || textLower.includes("spin777")) imageName = "spin-777.jpg";
+  else if (textLower.includes("spin crush") || textLower.includes("spin-crush")) imageName = "spin-crush.jpg";
+  else if (textLower.includes("spin gold") || textLower.includes("spin-gold")) imageName = "spin-gold.jpg";
+  else if (textLower.includes("spin winner") || textLower.includes("spin-winner")) imageName = "spin-winner.jpg";
+  else if (textLower.includes("top rummy") || textLower.includes("top-rummy")) imageName = "top-rummy.jpg";
+  else if (textLower.includes("win rummy") || textLower.includes("win-rummy")) imageName = "win-rummy.jpg";
+  else if (textLower.includes("yn 777") || textLower.includes("yn777")) imageName = "yn-777.jpg";
+  else if (textLower.includes("yono 777") || textLower.includes("yono-777")) imageName = "yono-777.jpg";
+  else if (textLower.includes("yono arcade") || textLower.includes("yono-arcade")) imageName = "yono-arcade.jpg";
+  else if (textLower.includes("yono games") || textLower.includes("yono-games")) imageName = "yono-games.jpg";
+  else if (textLower.includes("yono slots") || textLower.includes("yono-slots")) imageName = "yono-slots.jpg";
+  else if (textLower.includes("yono vip") || textLower.includes("yono-vip")) imageName = "yono-vip.jpg";
+  else if (textLower.includes("yes spin") || textLower.includes("yes-spin")) imageName = "yes-spin.jpg";
+  else if (textLower.includes("yono rummy") || textLower.includes("yono-rummy")) imageName = "yono-rummy.jpg";
 
   return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/Photo/${imageName}`;
 }
@@ -358,8 +395,7 @@ bot.on("text", async (ctx) => {
         try {
           await bot.telegram.editMessageCaption(channel, lastSentPosts[channel], null, cleanedCaption, {
             parse_mode: "HTML",
-            reply_markup: replyMarkup,
-            disable_web_page_preview: true
+            reply_markup: replyMarkup
           });
           success++;
         } catch (err) {
@@ -395,7 +431,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  // 🚀 CREATE POST HANDLER (With Preview Disabled)
+  // 🚀 CREATE POST HANDLER (With Top Photo & Disabled Link Preview)
   if (postStep[id] === "waiting_post_text") {
     postStep[id] = null;
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
@@ -404,7 +440,7 @@ bot.on("text", async (ctx) => {
       ? text.split("✅✅✅✅✅").map(p => p.trim()).filter(p => p.length > 0)
       : [text];
 
-    await ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending to channels...`);
+    await ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending with correct game photos...`);
 
     let totalSentCount = 0;
 
@@ -430,23 +466,13 @@ bot.on("text", async (ctx) => {
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
-            try {
-              const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, {
-                parse_mode: "HTML",
-                reply_markup: replyMarkup,
-                disable_web_page_preview: true
-              });
-              lastSentPosts[channel] = sentMsg.message_id;
-              channelMessages[channel] = sentMsg.message_id;
-              sent = true;
-            } catch (textErr) {
-              if (textErr.response && textErr.response.parameters && textErr.response.parameters.retry_after) {
-                const waitSec = textErr.response.parameters.retry_after + 2;
-                await new Promise(r => setTimeout(r, waitSec * 1000));
-                retries--;
-              } else {
-                break;
-              }
+            console.error(`Error sending photo to ${channel}:`, err.message);
+            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
+              const waitSec = err.response.parameters.retry_after + 2;
+              await new Promise(r => setTimeout(r, waitSec * 1000));
+              retries--;
+            } else {
+              break;
             }
           }
         }
@@ -467,7 +493,7 @@ bot.on("text", async (ctx) => {
       }
     }
 
-    return ctx.reply(`✅ **Finished! Successfully sent ${totalSentCount} out of ${rawPosts.length} post(s) to your channels.**`);
+    return ctx.reply(`✅ **Finished! Successfully sent ${totalSentCount} out of ${rawPosts.length} post(s) with photos to your channels.**`);
   }
 
   if (scheduleStep[id] === "waiting_post_text") {
@@ -534,7 +560,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 
-  // 🚀 AUTO-DETECT BULK POST (With Preview Disabled)
+  // 🚀 AUTO-DETECT BULK POST
   if (text.includes("✅✅✅✅✅")) {
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
 
@@ -544,7 +570,7 @@ bot.on("text", async (ctx) => {
       return ctx.reply("❌ No valid posts found separated by `✅✅✅✅✅`.");
     }
 
-    await ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending...`);
+    await ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending with photos...`);
 
     let totalSentCount = 0;
 
@@ -570,23 +596,13 @@ bot.on("text", async (ctx) => {
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
-            try {
-              const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, {
-                parse_mode: "HTML",
-                reply_markup: replyMarkup,
-                disable_web_page_preview: true
-              });
-              lastSentPosts[channel] = sentMsg.message_id;
-              channelMessages[channel] = sentMsg.message_id;
-              sent = true;
-            } catch (textErr) {
-              if (textErr.response && textErr.response.parameters && textErr.response.parameters.retry_after) {
-                const waitSec = textErr.response.parameters.retry_after + 2;
-                await new Promise(r => setTimeout(r, waitSec * 1000));
-                retries--;
-              } else {
-                break;
-              }
+            console.error(`Error sending photo to ${channel}:`, err.message);
+            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
+              const waitSec = err.response.parameters.retry_after + 2;
+              await new Promise(r => setTimeout(r, waitSec * 1000));
+              retries--;
+            } else {
+              break;
             }
           }
         }
@@ -607,7 +623,7 @@ bot.on("text", async (ctx) => {
       }
     }
 
-    return ctx.reply(`✅ **Successfully sent ${totalSentCount} out of ${rawPosts.length} posts to your channels!**`);
+    return ctx.reply(`✅ **Successfully sent ${totalSentCount} out of ${rawPosts.length} posts with photos to your channels!**`);
   }
 
   return ctx.reply("❌ Unknown command or text. Click '📝 Create Post' or send posts containing `✅✅✅✅✅`.");
@@ -634,17 +650,7 @@ setInterval(async () => {
           });
           lastSentPosts[channel] = sentMsg.message_id;
           channelMessages[channel] = sentMsg.message_id;
-        } catch (e) {
-          try {
-            const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, { 
-              parse_mode: "HTML", 
-              reply_markup: replyMarkup,
-              disable_web_page_preview: true 
-            });
-            lastSentPosts[channel] = sentMsg.message_id;
-            channelMessages[channel] = sentMsg.message_id;
-          } catch (err) {}
-        }
+        } catch (e) {}
       }
       sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
       if (sentPostsHistory.length > 50) sentPostsHistory.pop();
