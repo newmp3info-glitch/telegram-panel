@@ -135,7 +135,7 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// 🔍 Helper to detect game name and match exact GitHub filenames inside "Photo" folder
+// 🔍 Smart Dynamic Image Mapper from GitHub Photo Folder
 function getImageUrlFromText(postText) {
   const textLower = postText.toLowerCase();
   
@@ -143,67 +143,20 @@ function getImageUrlFromText(postText) {
   const repoName = "telegram-panel";
   const branch = "main";
 
-  let imageName = "yono-rummy.jpg";
-
-        if (textLower.includes("yono rummy")) imageName = "yono-rummy.jpg";
-   else if (textLower.includes("yono slots")) imageName = "yono-slots.jpg";
-   else if (textLower.includes("yono games")) imageName = "yono-games.jpg";
-   else if (textLower.includes("yono arcade")) imageName = "yono-arcade.jpg";
-   else if (textLower.includes("yes spin")) imageName = "yes-spin.jpg";
-   else if (textLower.includes("jaiho 91")) imageName = "jaiho-91.jpg";
-   else if (textLower.includes("yono vip")) imageName = "yono-vip.jpg";
-   else if (textLower.includes("jaiho 777 vip")) imageName = "jaiho-777-vip.jpg";
-   else if (textLower.includes("jaiho arcade")) imageName = "jaiho-arcade.jpg";
-   else if (textLower.includes("jaiho win")) imageName = "jaiho-win.jpg";
-   else if (textLower.includes("jaiho slots")) imageName = "jaiho-slots.jpg";
-   else if (textLower.includes("jaiho spin")) imageName = "jaiho-spin.jpg";
-   else if (textLower.includes("jaiho rummy")) imageName = "jaiho-rummy.jpg";
-   else if (textLower.includes("joy rummy")) imageName = "joy-rummy.jpg";
-   else if (textLower.includes("rummy 888")) imageName = "rummy-888.jpg";
-   else if (textLower.includes("rummy 77")) imageName = "rummy-77.jpg";
-   else if (textLower.includes("rummy ludo")) imageName = "rummy-ludo.jpg";
-   else if (textLower.includes("rummy 91")) imageName = "rummy-91.jpg";
-   else if (textLower.includes("boss rummy")) imageName = "boss-rummy.jpg";
-   else if (textLower.includes("ever 777")) imageName = "ever-777.jpg";
-   else if (textLower.includes("777 game")) imageName = "777-game.jpg";
-   else if (textLower.includes("ok rummy")) imageName = "ok-rummy.jpg";
-   else if (textLower.includes("hindi 777")) imageName = "hindi-777.jpg";
-   else if (textLower.includes("club inr")) imageName = "club-inr.jpg";
-   else if (textLower.includes("game rummy")) imageName = "game-rummy.jpg";
-   else if (textLower.includes("rumble rummy")) imageName = "rumble-rummy.jpg";
-   else if (textLower.includes("spin winner")) imageName = "spin-winner.jpg";
-   else if (textLower.includes("love rummy")) imageName = "love-rummy.jpg";
-   else if (textLower.includes("share slots")) imageName = "share-slots.jpg";
-   else if (textLower.includes("maha games")) imageName = "maha-games.jpg";
-   else if (textLower.includes("hi rummy")) imageName = "hi-rummy.jpg";
-   else if (textLower.includes("gogo rummy")) imageName = "gogo-rummy.jpg";
-   else if (textLower.includes("ind club")) imageName = "ind-club.jpg";
-   else if (textLower.includes("top rummy")) imageName = "top-rummy.jpg";
-   else if (textLower.includes("ind rummy")) imageName = "ind-rummy.jpg";
-   else if (textLower.includes("abc rummy")) imageName = "abc-rummy.jpg";
-   else if (textLower.includes("ind slots")) imageName = "ind-slots.jpg";
-   else if (textLower.includes("101z")) imageName = "101-z.jpg";
-   else if (textLower.includes("spin gold")) imageName = "spin-gold.jpg";
-   else if (textLower.includes("spin crush")) imageName = "spin-crush.jpg";
-   else if (textLower.includes("mbm bet")) imageName = "mbm-bet.jpg";
-   else if (textLower.includes("spin101")) imageName = "spin-101.jpg";
-   else if (textLower.includes("spin777")) imageName = "spin-777.jpg";
-   else if (textLower.includes("bet213")) imageName = "bet-213.jpg";
-   else if (textLower.includes("bingo101")) imageName = "bingo-101.jpg";
-   else if (textLower.includes("789jackpots")) imageName = "789-jackpots.jpg";
-   else if (textLower.includes("567slots")) imageName = "567-slots.jpg";
-   else if (textLower.includes("slots spin")) imageName = "slots-spin.jpg";
-   else if (textLower.includes("neta vip")) imageName = "neta-vip.jpg";
-   else if (textLower.includes("slots winner")) imageName = "slots-winner.jpg";
-   else if (textLower.includes("inr rummy")) imageName = "inr-rummy.jpg";
-   else if (textLower.includes("saga slots")) imageName = "saga-slots.jpg";
-   else if (textLower.includes("yono 777")) imageName = "yono-777.jpg";
-   else if (textLower.includes("yn777")) imageName = "yn-777.jpg";
-   else if (textLower.includes("max rummy")) imageName = "max-rummy.jpg";
-   else if (textLower.includes("dhan game")) imageName = "dhan-game.jpg";
-   else if (textLower.includes("win rummy")) imageName = "win-rummy.jpg";
-   else if (textLower.includes("gold rummy")) imageName = "gold-rummy.jpg";
-   else if (textLower.includes("money rummy")) imageName = "money-rummy.jpg";
+  // HTML ট্যাগ রিমুভ করে প্রথম লাইন বা গেমের নাম বের করা
+  let cleanText = textLower.replace(/<[^>]*>/g, '');
+  let firstPart = cleanText.split('➝')[0] || cleanText.split('\n')[0] || '';
+  
+  let imageName = firstPart
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-') + '.jpg';
+    
+  // বিশেষ কিছু ফাইলের নাম হ্যান্ডেল করার জন্য
+  if (imageName.includes('101z')) imageName = '101-z.jpg';
+  else if (imageName.includes('567slots')) imageName = '567-slots.jpg';
+  else if (imageName.includes('789jackpots')) imageName = '789-jackpots.jpg';
+  else if (imageName.includes('777game')) imageName = '777-game.jpg';
 
   return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/Photo/${imageName}`;
 }
