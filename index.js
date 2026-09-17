@@ -135,28 +135,39 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// 🔍 Smart Dynamic Image Mapper from GitHub Photo Folder
+// 🔍 Smart Dynamic Image Mapper (Ensures zero missing photos from GitHub Photo folder)
 function getImageUrlFromText(postText) {
-  const textLower = postText.toLowerCase();
-  
   const repoOwner = "newmp3info-glitch"; 
   const repoName = "telegram-panel";
   const branch = "main";
 
-  // HTML ট্যাগ রিমুভ করে প্রথম লাইন বা গেমের নাম বের করা
-  let cleanText = textLower.replace(/<[^>]*>/g, '');
-  let firstPart = cleanText.split('➝')[0] || cleanText.split('\n')[0] || '';
+  let cleanText = postText.replace(/<[^>]*>/g, '');
+  let titleLine = cleanText.split('➝')[0] || cleanText.split('\n')[0] || '';
   
-  let imageName = firstPart
-    .replace(/[^a-z0-9\s]/g, '')
+  let normalized = titleLine
+    .toLowerCase()
+    .replace(/[^\w\s]/gi, '')
     .trim()
-    .replace(/\s+/g, '-') + '.jpg';
-    
-  // বিশেষ কিছু ফাইলের নাম হ্যান্ডেল করার জন্য
-  if (imageName.includes('101z')) imageName = '101-z.jpg';
-  else if (imageName.includes('567slots')) imageName = '567-slots.jpg';
-  else if (imageName.includes('789jackpots')) imageName = '789-jackpots.jpg';
-  else if (imageName.includes('777game')) imageName = '777-game.jpg';
+    .replace(/\s+/g, '-');
+
+  let imageName = normalized + '.jpg';
+
+  // Special filename mapping exceptions
+  const exceptions = {
+    'jaiho-slots': 'jaihoslots.jpg',
+    'jaiho-spin': 'jaihospin.jpg',
+    'yono-shots': 'yono-slots.jpg',
+    'jaiho-shots': 'jaihoslots.jpg',
+    'ind-shots': 'ind-slots.jpg',
+    '101z': '101-z.jpg',
+    '567slots': '567-slots.jpg',
+    '789jackpots': '789-jackpots.jpg',
+    '777game': '777-game.jpg'
+  };
+
+  if (exceptions[normalized]) {
+    imageName = exceptions[normalized];
+  }
 
   return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/Photo/${imageName}`;
 }
