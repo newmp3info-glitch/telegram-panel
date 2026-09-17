@@ -358,7 +358,8 @@ bot.on("text", async (ctx) => {
         try {
           await bot.telegram.editMessageCaption(channel, lastSentPosts[channel], null, cleanedCaption, {
             parse_mode: "HTML",
-            reply_markup: replyMarkup
+            reply_markup: replyMarkup,
+            disable_web_page_preview: true
           });
           success++;
         } catch (err) {
@@ -394,7 +395,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  // 🚀 CREATE POST HANDLER (With Safe Photo/Text Fallback)
+  // 🚀 CREATE POST HANDLER (With Preview Disabled)
   if (postStep[id] === "waiting_post_text") {
     postStep[id] = null;
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
@@ -419,21 +420,21 @@ bot.on("text", async (ctx) => {
         let retries = 3;
         while (!sent && retries > 0) {
           try {
-            // Try sending photo first
             const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
               caption: cleanedCaption,
               parse_mode: "HTML",
-              reply_markup: replyMarkup
+              reply_markup: replyMarkup,
+              disable_web_page_preview: true
             });
             lastSentPosts[channel] = sentMsg.message_id;
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
-            // Fallback to text message if photo fails
             try {
               const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, {
                 parse_mode: "HTML",
-                reply_markup: replyMarkup
+                reply_markup: replyMarkup,
+                disable_web_page_preview: true
               });
               lastSentPosts[channel] = sentMsg.message_id;
               channelMessages[channel] = sentMsg.message_id;
@@ -533,7 +534,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 
-  // 🚀 AUTO-DETECT BULK POST (With Fallback)
+  // 🚀 AUTO-DETECT BULK POST (With Preview Disabled)
   if (text.includes("✅✅✅✅✅")) {
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
 
@@ -562,7 +563,8 @@ bot.on("text", async (ctx) => {
             const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
               caption: cleanedCaption,
               parse_mode: "HTML",
-              reply_markup: replyMarkup
+              reply_markup: replyMarkup,
+              disable_web_page_preview: true
             });
             lastSentPosts[channel] = sentMsg.message_id;
             channelMessages[channel] = sentMsg.message_id;
@@ -571,7 +573,8 @@ bot.on("text", async (ctx) => {
             try {
               const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, {
                 parse_mode: "HTML",
-                reply_markup: replyMarkup
+                reply_markup: replyMarkup,
+                disable_web_page_preview: true
               });
               lastSentPosts[channel] = sentMsg.message_id;
               channelMessages[channel] = sentMsg.message_id;
@@ -626,7 +629,8 @@ setInterval(async () => {
           const sentMsg = await bot.telegram.sendPhoto(channel, post.imageUrl, { 
             caption: cleanedCaption, 
             parse_mode: "HTML", 
-            reply_markup: replyMarkup 
+            reply_markup: replyMarkup,
+            disable_web_page_preview: true 
           });
           lastSentPosts[channel] = sentMsg.message_id;
           channelMessages[channel] = sentMsg.message_id;
@@ -634,7 +638,8 @@ setInterval(async () => {
           try {
             const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, { 
               parse_mode: "HTML", 
-              reply_markup: replyMarkup 
+              reply_markup: replyMarkup,
+              disable_web_page_preview: true 
             });
             lastSentPosts[channel] = sentMsg.message_id;
             channelMessages[channel] = sentMsg.message_id;
