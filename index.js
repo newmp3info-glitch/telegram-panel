@@ -135,7 +135,7 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// 🔍 Smart Dynamic Image Mapper (Ensures zero missing photos from GitHub Photo folder)
+// 🔍 Smart Dynamic Image Mapper
 function getImageUrlFromText(postText) {
   const repoOwner = "newmp3info-glitch"; 
   const repoName = "telegram-panel";
@@ -152,7 +152,6 @@ function getImageUrlFromText(postText) {
 
   let imageName = normalized + '.jpg';
 
-  // Special filename mapping exceptions
   const exceptions = {
     'jaiho-slots': 'jaihoslots.jpg',
     'jaiho-spin': 'jaihospin.jpg',
@@ -395,7 +394,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  // 🚀 CREATE POST HANDLER
+  // 🚀 CREATE POST HANDLER (With Safe Photo/Text Fallback)
   if (postStep[id] === "waiting_post_text") {
     postStep[id] = null;
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
@@ -420,6 +419,7 @@ bot.on("text", async (ctx) => {
         let retries = 3;
         while (!sent && retries > 0) {
           try {
+            // Try sending photo first
             const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
               caption: cleanedCaption,
               parse_mode: "HTML",
@@ -429,13 +429,23 @@ bot.on("text", async (ctx) => {
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
-            console.error(`Error sending to ${channel}:`, err.message);
-            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
-              const waitSec = err.response.parameters.retry_after + 2;
-              await new Promise(r => setTimeout(r, waitSec * 1000));
-              retries--;
-            } else {
-              break;
+            // Fallback to text message if photo fails
+            try {
+              const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, {
+                parse_mode: "HTML",
+                reply_markup: replyMarkup
+              });
+              lastSentPosts[channel] = sentMsg.message_id;
+              channelMessages[channel] = sentMsg.message_id;
+              sent = true;
+            } catch (textErr) {
+              if (textErr.response && textErr.response.parameters && textErr.response.parameters.retry_after) {
+                const waitSec = textErr.response.parameters.retry_after + 2;
+                await new Promise(r => setTimeout(r, waitSec * 1000));
+                retries--;
+              } else {
+                break;
+              }
             }
           }
         }
@@ -523,7 +533,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 
-  // 🚀 AUTO-DETECT BULK POST
+  // 🚀 AUTO-DETECT BULK POST (With Fallback)
   if (text.includes("✅✅✅✅✅")) {
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
 
@@ -558,13 +568,22 @@ bot.on("text", async (ctx) => {
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
-            console.error(`Error sending to ${channel}:`, err.message);
-            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
-              const waitSec = err.response.parameters.retry_after + 2;
-              await new Promise(r => setTimeout(r, waitSec * 1000));
-              retries--;
-            } else {
-              break;
+            try {
+              const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, {
+                parse_mode: "HTML",
+                reply_markup: replyMarkup
+              });
+              lastSentPosts[channel] = sentMsg.message_id;
+              channelMessages[channel] = sentMsg.message_id;
+              sent = true;
+            } catch (textErr) {
+              if (textErr.response && textErr.response.parameters && textErr.response.parameters.retry_after) {
+                const waitSec = textErr.response.parameters.retry_after + 2;
+                await new Promise(r => setTimeout(r, waitSec * 1000));
+                retries--;
+              } else {
+                break;
+              }
             }
           }
         }
@@ -611,7 +630,16 @@ setInterval(async () => {
           });
           lastSentPosts[channel] = sentMsg.message_id;
           channelMessages[channel] = sentMsg.message_id;
-        } catch (e) {}
+        } catch (e) {
+          try {
+            const sentMsg = await bot.telegram.sendMessage(channel, cleanedCaption, { 
+              parse_mode: "HTML", 
+              reply_markup: replyMarkup 
+            });
+            lastSentPosts[channel] = sentMsg.message_id;
+            channelMessages[channel] = sentMsg.message_id;
+          } catch (err) {}
+        }
       }
       sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
       if (sentPostsHistory.length > 50) sentPostsHistory.pop();
