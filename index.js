@@ -100,119 +100,313 @@ function resetStates(id) {
 // 🤖 AUTOMATIC 5-BUTTON PARSER FOR CHANNEL POSTS
 function processPost(caption) {
   if (!caption) return { text: "", replyMarkup: null };
-  
+
   let cleanedText = caption;
-  
+
   const rawUrlRegex = /(?<!href=['"=\s])(https?:\/\/[^\s<>'"\)]+)/g;
   const urls = caption.match(rawUrlRegex) || [];
-  
+
   if (urls.length > 0) {
     const uniqueUrls = [...new Set(urls)];
+
     uniqueUrls.forEach((url) => {
       const sampleUrl = url.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
       const removeLineRegex = new RegExp(`^.*${sampleUrl}.*$`, 'gm');
       cleanedText = cleanedText.replace(removeLineRegex, '');
     });
   }
-  
+
   cleanedText = cleanedText.replace(/\n\s*\n\s*\n+/g, '\n\n').trim();
-  
+
   const inlineKeyboard = [
     [
-      { text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱", url: "https://t.me/VipYonoFreeCode/3783", style: "primary" },
-      { text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰", url: "https://t.me/AllYonoRummyCode/138", style: "primary" }
+      {
+        text: "🎰 𝗡𝗲𝘄 𝗚𝗮𝗺𝗲 𝟰𝟱",
+        url: "https://t.me/VipYonoFreeCode/3783",
+        style: "primary"
+      },
+      {
+        text: "𝗧𝗼𝘁𝗮𝗹 𝗚𝗮𝗺𝗲 𝟳𝟬 🎰",
+        url: "https://t.me/AllYonoRummyCode/138",
+        style: "primary"
+      }
     ],
     [
-      { text: " 🤖 𝗬𝗼𝗻𝗼 𝗔𝗜 𝗕𝗼𝘁 🤖", url: "https://t.me/YonoGamingHeadAIBot", style: "success" },
-      { text: "​🤖 𝗣𝗿𝗼𝗺𝗼 𝗖𝗼𝗱𝗲 𝗕𝗼𝘁 🤖", url: "https://t.me/spin_crush_bot", style: "success" }
+      {
+        text: " 🤖 𝗬𝗼𝗻𝗼 𝗔𝗜 𝗕𝗼𝘁 🤖",
+        url: "https://t.me/YonoGamingHeadAIBot",
+        style: "success"
+      },
+      {
+        text: "​🤖 𝗣𝗿𝗼𝗺𝗼 𝗖𝗼𝗱𝗲 𝗕𝗼𝘁 🤖",
+        url: "https://t.me/spin_crush_bot",
+        style: "success"
+      }
     ],
     [
-      { text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗲𝗿 𝗔𝗽𝗽 🔥", url: "https://www.fastyonoapp.online", style: "primary" }
+      {
+        text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗲𝗿 𝗔𝗽𝗽 🔥",
+        url: "https://www.fastyonoapp.online",
+        style: "primary"
+      }
     ]
   ];
-  
-  const replyMarkup = { inline_keyboard: inlineKeyboard };
-  return { text: cleanedText, replyMarkup };
+
+  const replyMarkup = {
+    inline_keyboard: inlineKeyboard
+  };
+
+  return {
+    text: cleanedText,
+    replyMarkup
+  };
 }
 
-// 🔍 Exact 59 Image Filenames Mapping (100% Hardcoded to prevent missing images)
+// 🔍 Exact Image Filenames Mapping
 function getImageUrlFromText(postText) {
   const textLower = postText.toLowerCase();
-  
-  const repoOwner = "newmp3info-glitch"; 
+
+  const repoOwner = "newmp3info-glitch";
   const repoName = "telegram-panel";
   const branch = "main";
 
-  let imageName = "yono-rummy.jpg"; // Default fallback
+  let imageName = "yono-rummy.jpg";
 
-       if (textLower.includes("101-z") || textLower.includes("101z")) imageName = "101-z.jpg";
-  else if (textLower.includes("567-slots") || textLower.includes("567slots")) imageName = "567-slots.jpg";
-  else if (textLower.includes("777-game") || textLower.includes("777game")) imageName = "777-game.jpg";
-  else if (textLower.includes("789-jackpots") || textLower.includes("789jackpots")) imageName = "789-jackpots.jpg";
-  else if (textLower.includes("abc rummy") || textLower.includes("abc-rummy")) imageName = "abc-rummy.jpg";
-  else if (textLower.includes("bet-213") || textLower.includes("bet213")) imageName = "bet-213.jpg";
-  else if (textLower.includes("bingo-101") || textLower.includes("bingo101")) imageName = "bingo-101.jpg";
-  else if (textLower.includes("boss rummy") || textLower.includes("boss-rummy")) imageName = "boss-rummy.jpg";
-  else if (textLower.includes("club inr") || textLower.includes("club-inr")) imageName = "club-inr.jpg";
-  else if (textLower.includes("dhan game") || textLower.includes("dhan-game")) imageName = "dhan-game.jpg";
-  else if (textLower.includes("ever 777") || textLower.includes("ever-777")) imageName = "ever-777.jpg";
-  else if (textLower.includes("game rummy") || textLower.includes("game-rummy")) imageName = "game-rummy.jpg";
-  else if (textLower.includes("gogo rummy") || textLower.includes("gogo-rummy")) imageName = "gogo-rummy.jpg";
-  else if (textLower.includes("gold rummy") || textLower.includes("gold-rummy")) imageName = "gold-rummy.jpg";
-  else if (textLower.includes("hi rummy") || textLower.includes("hi-rummy")) imageName = "hi-rummy.jpg";
-  else if (textLower.includes("hindi 777") || textLower.includes("hindi-777")) imageName = "hindi-777.jpg";
-  else if (textLower.includes("ind club") || textLower.includes("ind-club")) imageName = "ind-club.jpg";
-  else if (textLower.includes("ind rummy") || textLower.includes("ind-rummy")) imageName = "ind-rummy.jpg";
-  else if (textLower.includes("ind slots") || textLower.includes("ind-slots")) imageName = "ind-slots.jpg";
-  else if (textLower.includes("inr rummy") || textLower.includes("inr-rummy")) imageName = "inr-rummy.jpg";
-  else if (textLower.includes("jaiho 777") || textLower.includes("jaiho-777-vip")) imageName = "jaiho-777-vip.jpg";
-  else if (textLower.includes("jaiho 91") || textLower.includes("jaiho-91")) imageName = "jaiho-91.jpg";
-  else if (textLower.includes("jaiho arcade") || textLower.includes("jaiho-arcade")) imageName = "jaiho-arcade.jpg";
-  else if (textLower.includes("jaiho rummy") || textLower.includes("jaiho-rummy")) imageName = "jaiho-rummy.jpg";
-  else if (textLower.includes("jaiho slots") || textLower.includes("jaihoslots") || textLower.includes("jaiho-slots")) imageName = "jaiho-slots.jpg";
-  else if (textLower.includes("jaiho spin") || textLower.includes("jaihospin") || textLower.includes("jaiho-spin")) imageName = "jaiho-spin.jpg";
-  else if (textLower.includes("jaiho win") || textLower.includes("jaiho-win")) imageName = "jaiho-win.jpg";
-  else if (textLower.includes("joy rummy") || textLower.includes("joy-rummy")) imageName = "joy-rummy.jpg";
-  else if (textLower.includes("love rummy") || textLower.includes("love-rummy")) imageName = "love-rummy.jpg";
-  else if (textLower.includes("maha games") || textLower.includes("maha-games")) imageName = "maha-games.jpg";
-  else if (textLower.includes("max rummy") || textLower.includes("max-rummy")) imageName = "max-rummy.jpg";
-  else if (textLower.includes("mbm bet") || textLower.includes("mbm-bet")) imageName = "mbm-bet.jpg";
-  else if (textLower.includes("money rummy") || textLower.includes("money-rummy")) imageName = "money-rummy.jpg";
-  else if (textLower.includes("neta vip") || textLower.includes("neta-vip")) imageName = "neta-vip.jpg";
-  else if (textLower.includes("ok rummy") || textLower.includes("ok-rummy")) imageName = "ok-rummy.jpg";
-  else if (textLower.includes("rumble rummy") || textLower.includes("rumble-rummy")) imageName = "rumble-rummy.jpg";
-  else if (textLower.includes("rummy 77") || textLower.includes("rummy-77")) imageName = "rummy-77.jpg";
-  else if (textLower.includes("rummy 888") || textLower.includes("rummy-888")) imageName = "rummy-888.jpg";
-  else if (textLower.includes("rummy 91") || textLower.includes("rummy-91")) imageName = "rummy-91.jpg";
-  else if (textLower.includes("rummy ludo") || textLower.includes("rummy-ludo")) imageName = "rummy-ludo.jpg";
-  else if (textLower.includes("saga slots") || textLower.includes("saga-slots")) imageName = "saga-slots.jpg";
-  else if (textLower.includes("share slots") || textLower.includes("share-slots")) imageName = "share-slots.jpg";
-  else if (textLower.includes("slots spin") || textLower.includes("slots-spin")) imageName = "slots-spin.jpg";
-  else if (textLower.includes("slots winner") || textLower.includes("slots-winner")) imageName = "slots-winner.jpg";
-  else if (textLower.includes("spin 101") || textLower.includes("spin101")) imageName = "spin-101.jpg";
-  else if (textLower.includes("spin 777") || textLower.includes("spin777")) imageName = "spin-777.jpg";
-  else if (textLower.includes("spin crush") || textLower.includes("spin-crush")) imageName = "spin-crush.jpg";
-  else if (textLower.includes("spin gold") || textLower.includes("spin-gold")) imageName = "spin-gold.jpg";
-  else if (textLower.includes("spin winner") || textLower.includes("spin-winner")) imageName = "spin-winner.jpg";
-  else if (textLower.includes("top rummy") || textLower.includes("top-rummy")) imageName = "top-rummy.jpg";
-  else if (textLower.includes("win rummy") || textLower.includes("win-rummy")) imageName = "win-rummy.jpg";
-  else if (textLower.includes("yn 777") || textLower.includes("yn777")) imageName = "yn-777.jpg";
-  else if (textLower.includes("yono 777") || textLower.includes("yono-777")) imageName = "yono-777.jpg";
-  else if (textLower.includes("yono arcade") || textLower.includes("yono-arcade")) imageName = "yono-arcade.jpg";
-  else if (textLower.includes("yono games") || textLower.includes("yono-games")) imageName = "yono-games.jpg";
-  else if (textLower.includes("yono slots") || textLower.includes("yono-slots")) imageName = "yono-slots.jpg";
-  else if (textLower.includes("yono vip") || textLower.includes("yono-vip")) imageName = "yono-vip.jpg";
-  else if (textLower.includes("yes spin") || textLower.includes("yes-spin")) imageName = "yes-spin.jpg";
-  else if (textLower.includes("yono rummy") || textLower.includes("yono-rummy")) imageName = "yono-rummy.jpg";
+  if (textLower.includes("101-z") || textLower.includes("101z"))
+    imageName = "101-z.jpg";
+
+  else if (textLower.includes("567-slots") || textLower.includes("567slots"))
+    imageName = "567-slots.jpg";
+
+  else if (textLower.includes("777-game") || textLower.includes("777game"))
+    imageName = "777-game.jpg";
+
+  else if (textLower.includes("789-jackpots") || textLower.includes("789jackpots"))
+    imageName = "789-jackpots.jpg";
+
+  else if (textLower.includes("abc rummy") || textLower.includes("abc-rummy"))
+    imageName = "abc-rummy.jpg";
+
+  else if (textLower.includes("bet-213") || textLower.includes("bet213"))
+    imageName = "bet-213.jpg";
+
+  else if (textLower.includes("bingo-101") || textLower.includes("bingo101"))
+    imageName = "bingo-101.jpg";
+
+  else if (textLower.includes("boss rummy") || textLower.includes("boss-rummy"))
+    imageName = "boss-rummy.jpg";
+
+  else if (textLower.includes("club inr") || textLower.includes("club-inr"))
+    imageName = "club-inr.jpg";
+
+  else if (textLower.includes("dhan game") || textLower.includes("dhan-game"))
+    imageName = "dhan-game.jpg";
+
+  else if (textLower.includes("ever 777") || textLower.includes("ever-777"))
+    imageName = "ever-777.jpg";
+
+  else if (textLower.includes("game rummy") || textLower.includes("game-rummy"))
+    imageName = "game-rummy.jpg";
+
+  else if (textLower.includes("gogo rummy") || textLower.includes("gogo-rummy"))
+    imageName = "gogo-rummy.jpg";
+
+  else if (textLower.includes("gold rummy") || textLower.includes("gold-rummy"))
+    imageName = "gold-rummy.jpg";
+
+  else if (textLower.includes("hi rummy") || textLower.includes("hi-rummy"))
+    imageName = "hi-rummy.jpg";
+
+  else if (textLower.includes("hindi 777") || textLower.includes("hindi-777"))
+    imageName = "hindi-777.jpg";
+
+  else if (textLower.includes("ind club") || textLower.includes("ind-club"))
+    imageName = "ind-club.jpg";
+
+  else if (textLower.includes("ind rummy") || textLower.includes("ind-rummy"))
+    imageName = "ind-rummy.jpg";
+
+  else if (textLower.includes("ind slots") || textLower.includes("ind-slots"))
+    imageName = "ind-slots.jpg";
+
+  else if (textLower.includes("inr rummy") || textLower.includes("inr-rummy"))
+    imageName = "inr-rummy.jpg";
+
+  else if (textLower.includes("jaiho 777") || textLower.includes("jaiho-777-vip"))
+    imageName = "jaiho-777-vip.jpg";
+
+  else if (textLower.includes("jaiho 91") || textLower.includes("jaiho-91"))
+    imageName = "jaiho-91.jpg";
+
+  else if (textLower.includes("jaiho arcade") || textLower.includes("jaiho-arcade"))
+    imageName = "jaiho-arcade.jpg";
+
+  else if (textLower.includes("jaiho rummy") || textLower.includes("jaiho-rummy"))
+    imageName = "jaiho-rummy.jpg";
+
+  else if (
+    textLower.includes("jaiho slots") ||
+    textLower.includes("jaihoslots") ||
+    textLower.includes("jaiho-slots")
+  )
+    imageName = "jaiho-slots.jpg";
+
+  else if (
+    textLower.includes("jaiho spin") ||
+    textLower.includes("jaihospin") ||
+    textLower.includes("jaiho-spin")
+  )
+    imageName = "jaiho-spin.jpg";
+
+  else if (textLower.includes("jaiho win") || textLower.includes("jaiho-win"))
+    imageName = "jaiho-win.jpg";
+
+  else if (textLower.includes("joy rummy") || textLower.includes("joy-rummy"))
+    imageName = "joy-rummy.jpg";
+
+  else if (textLower.includes("love rummy") || textLower.includes("love-rummy"))
+    imageName = "love-rummy.jpg";
+
+  else if (textLower.includes("maha games") || textLower.includes("maha-games"))
+    imageName = "maha-games.jpg";
+
+  else if (textLower.includes("max rummy") || textLower.includes("max-rummy"))
+    imageName = "max-rummy.jpg";
+
+  else if (textLower.includes("mbm bet") || textLower.includes("mbm-bet"))
+    imageName = "mbm-bet.jpg";
+
+  else if (textLower.includes("money rummy") || textLower.includes("money-rummy"))
+    imageName = "money-rummy.jpg";
+
+  else if (textLower.includes("neta vip") || textLower.includes("neta-vip"))
+    imageName = "neta-vip.jpg";
+
+  else if (textLower.includes("ok rummy") || textLower.includes("ok-rummy"))
+    imageName = "ok-rummy.jpg";
+
+  else if (textLower.includes("rumble rummy") || textLower.includes("rumble-rummy"))
+    imageName = "rumble-rummy.jpg";
+
+  else if (textLower.includes("rummy 77") || textLower.includes("rummy-77"))
+    imageName = "rummy-77.jpg";
+
+  else if (textLower.includes("rummy 888") || textLower.includes("rummy-888"))
+    imageName = "rummy-888.jpg";
+
+  else if (textLower.includes("rummy 91") || textLower.includes("rummy-91"))
+    imageName = "rummy-91.jpg";
+
+  else if (textLower.includes("rummy ludo") || textLower.includes("rummy-ludo"))
+    imageName = "rummy-ludo.jpg";
+
+  else if (textLower.includes("saga slots") || textLower.includes("saga-slots"))
+    imageName = "saga-slots.jpg";
+
+  else if (textLower.includes("share slots") || textLower.includes("share-slots"))
+    imageName = "share-slots.jpg";
+
+  else if (textLower.includes("slots spin") || textLower.includes("slots-spin"))
+    imageName = "slots-spin.jpg";
+
+  else if (textLower.includes("slots winner") || textLower.includes("slots-winner"))
+    imageName = "slots-winner.jpg";
+
+  else if (textLower.includes("spin 101") || textLower.includes("spin101"))
+    imageName = "spin-101.jpg";
+
+  else if (textLower.includes("spin 777") || textLower.includes("spin777"))
+    imageName = "spin-777.jpg";
+
+  else if (textLower.includes("spin crush") || textLower.includes("spin-crush"))
+    imageName = "spin-crush.jpg";
+
+  else if (textLower.includes("spin gold") || textLower.includes("spin-gold"))
+    imageName = "spin-gold.jpg";
+
+  else if (textLower.includes("spin winner") || textLower.includes("spin-winner"))
+    imageName = "spin-winner.jpg";
+
+  else if (textLower.includes("top rummy") || textLower.includes("top-rummy"))
+    imageName = "top-rummy.jpg";
+
+  else if (textLower.includes("win rummy") || textLower.includes("win-rummy"))
+    imageName = "win-rummy.jpg";
+
+  else if (textLower.includes("yn 777") || textLower.includes("yn777"))
+    imageName = "yn-777.jpg";
+
+  else if (textLower.includes("yono 777") || textLower.includes("yono-777"))
+    imageName = "yono-777.jpg";
+
+  else if (textLower.includes("yono arcade") || textLower.includes("yono-arcade"))
+    imageName = "yono-arcade.jpg";
+
+  else if (textLower.includes("yono games") || textLower.includes("yono-games"))
+    imageName = "yono-games.jpg";
+
+  else if (textLower.includes("yono slots") || textLower.includes("yono-slots"))
+    imageName = "yono-slots.jpg";
+
+  else if (textLower.includes("yono vip") || textLower.includes("yono-vip"))
+    imageName = "yono-vip.jpg";
+
+  else if (textLower.includes("yes spin") || textLower.includes("yes-spin"))
+    imageName = "yes-spin.jpg";
+
+  else if (textLower.includes("yono rummy") || textLower.includes("yono-rummy"))
+    imageName = "yono-rummy.jpg";
 
   return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/Photo/${imageName}`;
+}
+
+// ============================================================
+// 🖼️ NEW IMAGE DOWNLOADER
+// GitHub থেকে image bot নিজে download করবে
+// তারপর Telegram-এ local buffer হিসেবে upload করবে
+// ============================================================
+async function downloadImageFromGitHub(imageUrl) {
+  const response = await fetch(imageUrl, {
+    method: "GET",
+    redirect: "follow",
+    headers: {
+      "User-Agent": "Telegram-Panel-Bot/1.0"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `GitHub image download failed: ${response.status} ${response.statusText}`
+    );
+  }
+
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.toLowerCase().startsWith("image/")) {
+    throw new Error(
+      `GitHub URL did not return an image. Content-Type: ${contentType}`
+    );
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+
+  if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+    throw new Error("Downloaded image is empty.");
+  }
+
+  return Buffer.from(arrayBuffer);
 }
 
 // Admin verification middleware
 bot.use(async (ctx, next) => {
   if (!ctx.from) return;
+
   if (ctx.chat.type !== "private") return;
-  if (ctx.from.id != ADMIN_ID) return ctx.reply("⛔ Access Denied");
+
+  if (ctx.from.id != ADMIN_ID) {
+    return ctx.reply("⛔ Access Denied");
+  }
+
   return next();
 });
 
@@ -223,128 +417,219 @@ bot.start((ctx) => {
 
 bot.hears("➕ Add Channel", (ctx) => {
   const id = ctx.from.id;
+
   resetStates(id);
+
   waitingChannel[id] = true;
-  ctx.reply("📢 Send all channel usernames together (one per line or space separated):");
+
+  ctx.reply(
+    "📢 Send all channel usernames together (one per line or space separated):"
+  );
 });
 
 bot.hears("📋 Channel List", (ctx) => {
   resetStates(ctx.from.id);
-  if (channels.length === 0) return ctx.reply("❌ No Channel Added");
+
+  if (channels.length === 0) {
+    return ctx.reply("❌ No Channel Added");
+  }
+
   let text = "📋 Channel List\n\n";
-  channels.forEach((ch, i) => { text += `${i + 1}. ${ch}\n`; });
+
+  channels.forEach((ch, i) => {
+    text += `${i + 1}. ${ch}\n`;
+  });
+
   ctx.reply(text);
 });
 
 bot.hears("❌ Remove Channel", (ctx) => {
   const id = ctx.from.id;
+
   resetStates(id);
+
   waitingRemove[id] = true;
+
   if (channels.length === 0) {
     waitingRemove[id] = false;
     return ctx.reply("❌ No Channel Found");
   }
+
   let text = "Send Channel Username to Remove:\n\n";
-  channels.forEach((ch) => { text += `${ch}\n`; });
+
+  channels.forEach((ch) => {
+    text += `${ch}\n`;
+  });
+
   ctx.reply(text);
 });
 
 // ⏳ Scheduled Posts Button Handler
 bot.hears("⏳ Scheduled Posts", async (ctx) => {
   resetStates(ctx.from.id);
+
   if (scheduledPosts.length === 0) {
     return ctx.reply("❌ No scheduled posts found.");
   }
-  
+
   let text = `⏳ **Scheduled Posts List (${scheduledPosts.length}):**\n\n`;
   let inlineKeyboard = [];
 
   scheduledPosts.forEach((post, i) => {
-    const postTime = new Date(post.time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-    const shortCaption = post.caption ? (post.caption.length > 40 ? post.caption.substring(0, 40) + "..." : post.caption) : "Photo Post";
-    
+    const postTime = new Date(post.time).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata"
+    });
+
+    const shortCaption = post.caption
+      ? (
+          post.caption.length > 40
+            ? post.caption.substring(0, 40) + "..."
+            : post.caption
+        )
+      : "Photo Post";
+
     text += `${i + 1}. 🕒 **Time:** ${postTime}\n📝 <i>${shortCaption}</i>\n\n`;
-    
+
     inlineKeyboard.push([
-      { text: `❌ Delete Post #${i + 1}`, callback_data: `del_sched_${post.id}` }
+      {
+        text: `❌ Delete Post #${i + 1}`,
+        callback_data: `del_sched_${post.id}`
+      }
     ]);
   });
 
   await ctx.reply(text, {
     parse_mode: "HTML",
-    reply_markup: { inline_keyboard: inlineKeyboard }
+    reply_markup: {
+      inline_keyboard: inlineKeyboard
+    }
   });
 });
 
 bot.action(/^del_sched_(.+)$/, async (ctx) => {
   const scheduleId = ctx.match[1];
-  const index = scheduledPosts.findIndex(p => p.id === scheduleId);
-  
+
+  const index = scheduledPosts.findIndex(
+    p => p.id === scheduleId
+  );
+
   if (index === -1) {
-    return ctx.answerCbQuery("❌ Scheduled post already deleted or not found!");
+    return ctx.answerCbQuery(
+      "❌ Scheduled post already deleted or not found!"
+    );
   }
 
   scheduledPosts.splice(index, 1);
+
   saveSchedule();
 
-  await ctx.answerCbQuery("✅ Scheduled post deleted successfully!");
+  await ctx.answerCbQuery(
+    "✅ Scheduled post deleted successfully!"
+  );
 
   if (scheduledPosts.length === 0) {
     try {
-      await ctx.editMessageText("❌ **All scheduled posts have been deleted. List is now empty.**", { parse_mode: "HTML" });
+      await ctx.editMessageText(
+        "❌ **All scheduled posts have been deleted. List is now empty.**",
+        {
+          parse_mode: "HTML"
+        }
+      );
     } catch (e) {}
-  } else {
-    let text = `⏳ **Scheduled Posts List (${scheduledPosts.length}):**\n\n`;
-    let inlineKeyboard = [];
 
-    scheduledPosts.forEach((post, i) => {
-      const postTime = new Date(post.time).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-      const shortCaption = post.caption ? (post.caption.length > 40 ? post.caption.substring(0, 40) + "..." : post.caption) : "Photo Post";
-      
-      text += `${i + 1}. 🕒 **Time:** ${postTime}\n📝 <i>${shortCaption}</i>\n\n`;
-      
-      inlineKeyboard.push([
-        { text: `❌ Delete Post #${i + 1}`, callback_data: `del_sched_${post.id}` }
-      ]);
+    return;
+  }
+
+  let text = `⏳ **Scheduled Posts List (${scheduledPosts.length}):**\n\n`;
+  let inlineKeyboard = [];
+
+  scheduledPosts.forEach((post, i) => {
+    const postTime = new Date(post.time).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata"
     });
 
-    try {
-      await ctx.editMessageText(text, {
-        parse_mode: "HTML",
-        reply_markup: { inline_keyboard: inlineKeyboard }
-      });
-    } catch (e) {}
-  }
+    const shortCaption = post.caption
+      ? (
+          post.caption.length > 40
+            ? post.caption.substring(0, 40) + "..."
+            : post.caption
+        )
+      : "Photo Post";
+
+    text += `${i + 1}. 🕒 **Time:** ${postTime}\n📝 <i>${shortCaption}</i>\n\n`;
+
+    inlineKeyboard.push([
+      {
+        text: `❌ Delete Post #${i + 1}`,
+        callback_data: `del_sched_${post.id}`
+      }
+    ]);
+  });
+
+  try {
+    await ctx.editMessageText(text, {
+      parse_mode: "HTML",
+      reply_markup: {
+        inline_keyboard: inlineKeyboard
+      }
+    });
+  } catch (e) {}
 });
 
 bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
+
   resetStates(id);
+
   postStep[id] = "waiting_post_text";
-  ctx.reply("📝 **Send your post text/HTML code now:**\n(একাধিক পোস্ট পাঠাতে চাইলে প্রতিটির মাঝে `✅✅✅✅✅` দিন)");
+
+  ctx.reply(
+    "📝 **Send your post text/HTML code now:**\n(একাধিক পোস্ট পাঠাতে চাইলে প্রতিটির মাঝে `✅✅✅✅✅` দিন)"
+  );
 });
 
 bot.hears("⏰ Schedule Post", (ctx) => {
   const id = ctx.from.id;
+
   resetStates(id);
+
   scheduleStep[id] = "waiting_post_text";
-  ctx.reply("⏰ **Send your post text/HTML code for schedule:**");
+
+  ctx.reply(
+    "⏰ **Send your post text/HTML code for schedule:**"
+  );
 });
 
 bot.hears("✏️ Edit Post", (ctx) => {
   const id = ctx.from.id;
+
   resetStates(id);
-  if (channels.length === 0) return ctx.reply("❌ No channels found.");
+
+  if (channels.length === 0) {
+    return ctx.reply("❌ No channels found.");
+  }
+
   editStep[id] = "waiting_new_text";
-  ctx.reply("✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!");
+
+  ctx.reply(
+    "✏️ **Send the new text/caption.**\nIt will instantly update the latest broadcasted post across all your channels!"
+  );
 });
 
 bot.hears("🗑️ Delete Post", (ctx) => {
   const id = ctx.from.id;
+
   resetStates(id);
-  if (channels.length === 0) return ctx.reply("❌ No channels found.");
+
+  if (channels.length === 0) {
+    return ctx.reply("❌ No channels found.");
+  }
+
   deleteStep[id] = "waiting_delete_text";
-  ctx.reply("🗑️ **Send the text (or caption) of the post you want to delete from all channels:**");
+
+  ctx.reply(
+    "🗑️ **Send the text (or caption) of the post you want to delete from all channels:**"
+  );
 });
 
 bot.on("text", async (ctx) => {
@@ -353,10 +638,13 @@ bot.on("text", async (ctx) => {
 
   if (waitingChannel[id]) {
     waitingChannel[id] = false;
-    
+
     const foundChannels = text.match(/@[^\s]+/g);
+
     if (!foundChannels || foundChannels.length === 0) {
-      return ctx.reply("❌ No valid channel usernames found starting '@'.");
+      return ctx.reply(
+        "❌ No valid channel usernames found starting '@'."
+      );
     }
 
     let addedCount = 0;
@@ -364,6 +652,7 @@ bot.on("text", async (ctx) => {
 
     foundChannels.forEach(ch => {
       const cleanCh = ch.trim();
+
       if (!channels.includes(cleanCh)) {
         channels.push(cleanCh);
         addedCount++;
@@ -373,30 +662,53 @@ bot.on("text", async (ctx) => {
     });
 
     saveChannels();
-    return ctx.reply(`✅ **Channels Added Successfully!**\n\n➕ Newly Added: ${addedCount}\n⚠️ Already Exists: ${alreadyCount}\n📢 Total Channels Now: ${channels.length}`);
+
+    return ctx.reply(
+      `✅ **Channels Added Successfully!**\n\n➕ Newly Added: ${addedCount}\n⚠️ Already Exists: ${alreadyCount}\n📢 Total Channels Now: ${channels.length}`
+    );
   }
 
   if (waitingRemove[id]) {
     waitingRemove[id] = false;
+
     const index = channels.indexOf(text);
-    if (index === -1) return ctx.reply("❌ Channel Not Found");
+
+    if (index === -1) {
+      return ctx.reply("❌ Channel Not Found");
+    }
+
     channels.splice(index, 1);
+
     saveChannels();
+
     return ctx.reply("✅ Channel Removed");
   }
 
   if (editStep[id] === "waiting_new_text") {
     editStep[id] = null;
-    const { text: cleanedCaption, replyMarkup } = processPost(text);
-    let success = 0, failed = 0;
+
+    const {
+      text: cleanedCaption,
+      replyMarkup
+    } = processPost(text);
+
+    let success = 0;
+    let failed = 0;
 
     for (const channel of channels) {
       if (lastSentPosts[channel]) {
         try {
-          await bot.telegram.editMessageCaption(channel, lastSentPosts[channel], null, cleanedCaption, {
-            parse_mode: "HTML",
-            reply_markup: replyMarkup
-          });
+          await bot.telegram.editMessageCaption(
+            channel,
+            lastSentPosts[channel],
+            null,
+            cleanedCaption,
+            {
+              parse_mode: "HTML",
+              reply_markup: replyMarkup
+            }
+          );
+
           success++;
         } catch (err) {
           failed++;
@@ -405,21 +717,42 @@ bot.on("text", async (ctx) => {
         failed++;
       }
     }
-    return ctx.reply(`✅ **All Channel Posts Edited Successfully!**\n\nSuccess: ${success}\nFailed: ${failed}`);
+
+    return ctx.reply(
+      `✅ **All Channel Posts Edited Successfully!**\n\nSuccess: ${success}\nFailed: ${failed}`
+    );
   }
 
   if (deleteStep[id] === "waiting_delete_text") {
     deleteStep[id] = null;
-    const targetPostIndex = sentPostsHistory.findIndex(p => p.text.includes(text) || text.includes(p.text.substring(0, 15)));
+
+    const targetPostIndex = sentPostsHistory.findIndex(
+      p =>
+        p.text.includes(text) ||
+        text.includes(p.text.substring(0, 15))
+    );
+
     if (targetPostIndex === -1) {
-      return ctx.reply("❌ No matching sent post found with this text!");
+      return ctx.reply(
+        "❌ No matching sent post found with this text!"
+      );
     }
 
     const postToDelete = sentPostsHistory[targetPostIndex];
-    let success = 0, failed = 0;
-    for (const [channel, msgId] of Object.entries(postToDelete.channelMessages)) {
+
+    let success = 0;
+    let failed = 0;
+
+    for (
+      const [channel, msgId]
+      of Object.entries(postToDelete.channelMessages)
+    ) {
       try {
-        await bot.telegram.deleteMessage(channel, msgId);
+        await bot.telegram.deleteMessage(
+          channel,
+          msgId
+        );
+
         success++;
       } catch (err) {
         failed++;
@@ -427,90 +760,208 @@ bot.on("text", async (ctx) => {
     }
 
     sentPostsHistory.splice(targetPostIndex, 1);
+
     saveSentHistory();
-    return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
+
+    return ctx.reply(
+      `🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`
+    );
   }
 
-  // 🚀 CREATE POST HANDLER (With Top Photo & Disabled Link Preview)
+  // ============================================================
+  // 🚀 CREATE POST HANDLER
+  // GitHub image download + Telegram upload
+  // ============================================================
   if (postStep[id] === "waiting_post_text") {
     postStep[id] = null;
-    if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
 
-    const rawPosts = text.includes("✅✅✅✅✅") 
-      ? text.split("✅✅✅✅✅").map(p => p.trim()).filter(p => p.length > 0)
+    if (channels.length === 0) {
+      return ctx.reply(
+        "❌ No channels found. Please add a channel first."
+      );
+    }
+
+    const rawPosts = text.includes("✅✅✅✅✅")
+      ? text
+          .split("✅✅✅✅✅")
+          .map(p => p.trim())
+          .filter(p => p.length > 0)
       : [text];
 
-    await ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending with correct game photos...`);
+    await ctx.reply(
+      `🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending with correct game photos...`
+    );
 
     let totalSentCount = 0;
 
     for (let i = 0; i < rawPosts.length; i++) {
       const singlePostText = rawPosts[i];
-      const imageUrl = getImageUrlFromText(singlePostText);
-      const { text: cleanedCaption, replyMarkup } = processPost(singlePostText);
+
+      const imageUrl =
+        getImageUrlFromText(singlePostText);
+
+      const {
+        text: cleanedCaption,
+        replyMarkup
+      } = processPost(singlePostText);
+
+      let imageBuffer;
+
+      // 🖼️ Download image from GitHub
+      try {
+        console.log(
+          `🖼️ Downloading image for post ${i + 1}: ${imageUrl}`
+        );
+
+        imageBuffer =
+          await downloadImageFromGitHub(imageUrl);
+
+        console.log(
+          `✅ Image downloaded successfully for post ${i + 1}`
+        );
+      } catch (imageError) {
+        console.error(
+          `❌ Image download failed for post ${i + 1}:`,
+          imageError.message
+        );
+
+        continue;
+      }
 
       let channelMessages = {};
 
       for (const channel of channels) {
         let sent = false;
         let retries = 3;
+
         while (!sent && retries > 0) {
           try {
-            const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
-              caption: cleanedCaption,
-              parse_mode: "HTML",
-              reply_markup: replyMarkup,
-              disable_web_page_preview: true
-            });
-            lastSentPosts[channel] = sentMsg.message_id;
-            channelMessages[channel] = sentMsg.message_id;
+            // 🖼️ IMPORTANT:
+            // Telegram এখন GitHub URL fetch করবে না।
+            // Download করা image buffer সরাসরি upload করবে।
+            const sentMsg =
+              await bot.telegram.sendPhoto(
+                channel,
+                {
+                  source: imageBuffer,
+                  filename: "game-photo.jpg"
+                },
+                {
+                  caption: cleanedCaption,
+                  parse_mode: "HTML",
+                  reply_markup: replyMarkup,
+                  disable_web_page_preview: true
+                }
+              );
+
+            lastSentPosts[channel] =
+              sentMsg.message_id;
+
+            channelMessages[channel] =
+              sentMsg.message_id;
+
             sent = true;
+
+            console.log(
+              `✅ Photo sent to ${channel}`
+            );
           } catch (err) {
-            console.error(`Error sending photo to ${channel}:`, err.message);
-            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
-              const waitSec = err.response.parameters.retry_after + 2;
-              await new Promise(r => setTimeout(r, waitSec * 1000));
+            console.error(
+              `Error sending photo to ${channel}:`,
+              err.message
+            );
+
+            if (
+              err.response &&
+              err.response.parameters &&
+              err.response.parameters.retry_after
+            ) {
+              const waitSec =
+                err.response.parameters.retry_after + 2;
+
+              await new Promise(
+                r => setTimeout(r, waitSec * 1000)
+              );
+
               retries--;
             } else {
               break;
             }
           }
         }
-        await new Promise(r => setTimeout(r, 1500));
+
+        await new Promise(
+          r => setTimeout(r, 1500)
+        );
       }
 
       if (Object.keys(channelMessages).length > 0) {
-        sentPostsHistory.unshift({ text: singlePostText, channelMessages, time: Date.now() });
+        sentPostsHistory.unshift({
+          text: singlePostText,
+          channelMessages,
+          time: Date.now()
+        });
+
         totalSentCount++;
       }
 
-      if (sentPostsHistory.length > 100) sentPostsHistory.pop();
+      if (sentPostsHistory.length > 100) {
+        sentPostsHistory.pop();
+      }
+
       saveSentHistory();
       saveLastPosts();
 
       if (i < rawPosts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(
+          resolve => setTimeout(resolve, 5000)
+        );
       }
     }
 
-    return ctx.reply(`✅ **Finished! Successfully sent ${totalSentCount} out of ${rawPosts.length} post(s) with photos to your channels.**`);
+    return ctx.reply(
+      `✅ **Finished! Successfully sent ${totalSentCount} out of ${rawPosts.length} post(s) with photos to your channels.**`
+    );
   }
 
   if (scheduleStep[id] === "waiting_post_text") {
-    scheduleData[id] = { caption: text };
+    scheduleData[id] = {
+      caption: text
+    };
+
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📝 Post Text Saved! Send schedule duration in minutes OR Date & Time with AM/PM:");
+
+    return ctx.reply(
+      "📝 Post Text Saved! Send schedule duration in minutes OR Date & Time with AM/PM:"
+    );
   }
 
   if (scheduleStep[id] === "waiting_time") {
     let targetTime;
-    if (/^\d+$/.test(text)) {
-      targetTime = new Date(Date.now() + parseInt(text) * 60 * 1000);
-    } else {
-      const matchSimple = text.match(/^(\d{1,2})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
-      const matchFull = text.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i);
 
-      let day, month, year, hour, minute, period;
+    if (/^\d+$/.test(text)) {
+      targetTime = new Date(
+        Date.now() +
+        parseInt(text) * 60 * 1000
+      );
+    } else {
+      const matchSimple =
+        text.match(
+          /^(\d{1,2})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i
+        );
+
+      const matchFull =
+        text.match(
+          /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[,\s]+(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)$/i
+        );
+
+      let day;
+      let month;
+      let year;
+      let hour;
+      let minute;
+      let period;
+
       const now = new Date();
 
       if (matchSimple) {
@@ -529,147 +980,399 @@ bot.on("text", async (ctx) => {
         period = matchFull[6].toUpperCase();
       }
 
-      if (period === "PM" && hour < 12) hour += 12;
-      if (period === "AM" && hour === 12) hour = 0;
+      if (period === "PM" && hour < 12) {
+        hour += 12;
+      }
 
-      if (day && month && year && !isNaN(hour)) {
-        const fMonth = String(month).padStart(2, '0');
-        const fDay = String(day).padStart(2, '0');
-        const fHour = String(hour).padStart(2, '0');
-        const fMin = String(minute).padStart(2, '0');
+      if (period === "AM" && hour === 12) {
+        hour = 0;
+      }
 
-        targetTime = new Date(`${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`);
+      if (
+        day &&
+        month &&
+        year &&
+        !isNaN(hour)
+      ) {
+        const fMonth =
+          String(month).padStart(2, "0");
+
+        const fDay =
+          String(day).padStart(2, "0");
+
+        const fHour =
+          String(hour).padStart(2, "0");
+
+        const fMin =
+          String(minute).padStart(2, "0");
+
+        targetTime =
+          new Date(
+            `${year}-${fMonth}-${fDay}T${fHour}:${fMin}:00+05:30`
+          );
       }
     }
 
-    if (!targetTime || isNaN(targetTime.getTime())) return ctx.reply("❌ Invalid time format!");
-
-    const scheduleId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    const imageUrl = getImageUrlFromText(scheduleData[id].caption);
-    
-    scheduledPosts.push({ 
-      id: scheduleId, 
-      imageUrl: imageUrl, 
-      caption: scheduleData[id].caption, 
-      time: targetTime.toISOString() 
-    });
-    
-    saveSchedule();
-    scheduleStep[id] = null;
-    scheduleData[id] = null;
-    return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
-  }
-
-  // 🚀 AUTO-DETECT BULK POST
-  if (text.includes("✅✅✅✅✅")) {
-    if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
-
-    const rawPosts = text.split("✅✅✅✅✅").map(p => p.trim()).filter(p => p.length > 0);
-
-    if (rawPosts.length === 0) {
-      return ctx.reply("❌ No valid posts found separated by `✅✅✅✅✅`.");
+    if (
+      !targetTime ||
+      isNaN(targetTime.getTime())
+    ) {
+      return ctx.reply(
+        "❌ Invalid time format!"
+      );
     }
 
-    await ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending with photos...`);
+    const scheduleId =
+      Date.now().toString() +
+      Math.random()
+        .toString(36)
+        .substr(2, 9);
+
+    const imageUrl =
+      getImageUrlFromText(
+        scheduleData[id].caption
+      );
+
+    scheduledPosts.push({
+      id: scheduleId,
+      imageUrl: imageUrl,
+      caption: scheduleData[id].caption,
+      time: targetTime.toISOString()
+    });
+
+    saveSchedule();
+
+    scheduleStep[id] = null;
+    scheduleData[id] = null;
+
+    return ctx.reply(
+      `✅ Post Scheduled for (IST): ${targetTime.toLocaleString(
+        "en-IN",
+        { timeZone: "Asia/Kolkata" }
+      )}`
+    );
+  }
+
+  // ============================================================
+  // 🚀 AUTO-DETECT BULK POST
+  // ============================================================
+  if (text.includes("✅✅✅✅✅")) {
+    if (channels.length === 0) {
+      return ctx.reply(
+        "❌ No channels found. Please add a channel first."
+      );
+    }
+
+    const rawPosts =
+      text
+        .split("✅✅✅✅✅")
+        .map(p => p.trim())
+        .filter(p => p.length > 0);
+
+    if (rawPosts.length === 0) {
+      return ctx.reply(
+        "❌ No valid posts found separated by `✅✅✅✅✅`."
+      );
+    }
+
+    await ctx.reply(
+      `🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending with photos...`
+    );
 
     let totalSentCount = 0;
 
     for (let i = 0; i < rawPosts.length; i++) {
-      const singlePostText = rawPosts[i];
-      const imageUrl = getImageUrlFromText(singlePostText);
-      const { text: cleanedCaption, replyMarkup } = processPost(singlePostText);
+      const singlePostText =
+        rawPosts[i];
+
+      const imageUrl =
+        getImageUrlFromText(
+          singlePostText
+        );
+
+      const {
+        text: cleanedCaption,
+        replyMarkup
+      } = processPost(
+        singlePostText
+      );
+
+      let imageBuffer;
+
+      // 🖼️ Download GitHub image
+      try {
+        console.log(
+          `🖼️ Downloading bulk image ${i + 1}: ${imageUrl}`
+        );
+
+        imageBuffer =
+          await downloadImageFromGitHub(
+            imageUrl
+          );
+
+        console.log(
+          `✅ Bulk image ${i + 1} downloaded`
+        );
+      } catch (imageError) {
+        console.error(
+          `❌ Bulk image ${i + 1} failed:`,
+          imageError.message
+        );
+
+        continue;
+      }
 
       let channelMessages = {};
 
       for (const channel of channels) {
         let sent = false;
         let retries = 3;
+
         while (!sent && retries > 0) {
           try {
-            const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
-              caption: cleanedCaption,
-              parse_mode: "HTML",
-              reply_markup: replyMarkup,
-              disable_web_page_preview: true
-            });
-            lastSentPosts[channel] = sentMsg.message_id;
-            channelMessages[channel] = sentMsg.message_id;
+            const sentMsg =
+              await bot.telegram.sendPhoto(
+                channel,
+                {
+                  source: imageBuffer,
+                  filename: "game-photo.jpg"
+                },
+                {
+                  caption: cleanedCaption,
+                  parse_mode: "HTML",
+                  reply_markup: replyMarkup,
+                  disable_web_page_preview: true
+                }
+              );
+
+            lastSentPosts[channel] =
+              sentMsg.message_id;
+
+            channelMessages[channel] =
+              sentMsg.message_id;
+
             sent = true;
+
+            console.log(
+              `✅ Bulk photo sent to ${channel}`
+            );
           } catch (err) {
-            console.error(`Error sending photo to ${channel}:`, err.message);
-            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
-              const waitSec = err.response.parameters.retry_after + 2;
-              await new Promise(r => setTimeout(r, waitSec * 1000));
+            console.error(
+              `Error sending photo to ${channel}:`,
+              err.message
+            );
+
+            if (
+              err.response &&
+              err.response.parameters &&
+              err.response.parameters.retry_after
+            ) {
+              const waitSec =
+                err.response.parameters.retry_after + 2;
+
+              await new Promise(
+                r => setTimeout(
+                  r,
+                  waitSec * 1000
+                )
+              );
+
               retries--;
             } else {
               break;
             }
           }
         }
-        await new Promise(r => setTimeout(r, 1500));
+
+        await new Promise(
+          r => setTimeout(r, 1500)
+        );
       }
 
-      if (Object.keys(channelMessages).length > 0) {
-        sentPostsHistory.unshift({ text: singlePostText, channelMessages, time: Date.now() });
+      if (
+        Object.keys(channelMessages).length > 0
+      ) {
+        sentPostsHistory.unshift({
+          text: singlePostText,
+          channelMessages,
+          time: Date.now()
+        });
+
         totalSentCount++;
       }
 
-      if (sentPostsHistory.length > 100) sentPostsHistory.pop();
+      if (sentPostsHistory.length > 100) {
+        sentPostsHistory.pop();
+      }
+
       saveSentHistory();
       saveLastPosts();
 
       if (i < rawPosts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(
+          resolve => setTimeout(
+            resolve,
+            5000
+          )
+        );
       }
     }
 
-    return ctx.reply(`✅ **Successfully sent ${totalSentCount} out of ${rawPosts.length} posts with photos to your channels!**`);
+    return ctx.reply(
+      `✅ **Successfully sent ${totalSentCount} out of ${rawPosts.length} posts with photos to your channels!**`
+    );
   }
 
-  return ctx.reply("❌ Unknown command or text. Click '📝 Create Post' or send posts containing `✅✅✅✅✅`.");
+  return ctx.reply(
+    "❌ Unknown command or text. Click '📝 Create Post' or send posts containing `✅✅✅✅✅`."
+  );
 });
 
-// Background Scheduler
+// ============================================================
+// ⏰ Background Scheduler
+// GitHub image আগে download হবে,
+// তারপর Telegram-এ upload হবে
+// ============================================================
 setInterval(async () => {
-  if (scheduledPosts.length === 0) return;
+  if (scheduledPosts.length === 0) {
+    return;
+  }
+
   const now = new Date();
+
   let hasChanges = false;
 
-  for (let i = scheduledPosts.length - 1; i >= 0; i--) {
-    const post = scheduledPosts[i];
-    if (new Date(post.time) <= now) {
-      const { text: cleanedCaption, replyMarkup } = processPost(post.caption);
+  for (
+    let i = scheduledPosts.length - 1;
+    i >= 0;
+    i--
+  ) {
+    const post =
+      scheduledPosts[i];
+
+    if (
+      new Date(post.time) <= now
+    ) {
+      const {
+        text: cleanedCaption,
+        replyMarkup
+      } = processPost(
+        post.caption
+      );
+
       let channelMessages = {};
+
+      // 🖼️ Download scheduled image from GitHub
+      let imageBuffer;
+
+      try {
+        console.log(
+          `🖼️ Downloading scheduled image: ${post.imageUrl}`
+        );
+
+        imageBuffer =
+          await downloadImageFromGitHub(
+            post.imageUrl
+          );
+
+        console.log(
+          "✅ Scheduled image downloaded"
+        );
+      } catch (imageError) {
+        console.error(
+          "❌ Scheduled image download failed:",
+          imageError.message
+        );
+
+        // Scheduled post remove না করে রাখছি,
+        // যাতে পরের scheduler cycle-এ আবার চেষ্টা করে।
+        continue;
+      }
+
       for (const channel of channels) {
         try {
-          const sentMsg = await bot.telegram.sendPhoto(channel, post.imageUrl, { 
-            caption: cleanedCaption, 
-            parse_mode: "HTML", 
-            reply_markup: replyMarkup,
-            disable_web_page_preview: true 
-          });
-          lastSentPosts[channel] = sentMsg.message_id;
-          channelMessages[channel] = sentMsg.message_id;
-        } catch (e) {}
+          const sentMsg =
+            await bot.telegram.sendPhoto(
+              channel,
+              {
+                source: imageBuffer,
+                filename: "game-photo.jpg"
+              },
+              {
+                caption: cleanedCaption,
+                parse_mode: "HTML",
+                reply_markup: replyMarkup,
+                disable_web_page_preview: true
+              }
+            );
+
+          lastSentPosts[channel] =
+            sentMsg.message_id;
+
+          channelMessages[channel] =
+            sentMsg.message_id;
+
+          console.log(
+            `✅ Scheduled photo sent to ${channel}`
+          );
+        } catch (e) {
+          console.error(
+            `❌ Scheduled post failed for ${channel}:`,
+            e.message
+          );
+        }
       }
-      sentPostsHistory.unshift({ text: post.caption, channelMessages, time: Date.now() });
-      if (sentPostsHistory.length > 50) sentPostsHistory.pop();
+
+      sentPostsHistory.unshift({
+        text: post.caption,
+        channelMessages,
+        time: Date.now()
+      });
+
+      if (sentPostsHistory.length > 50) {
+        sentPostsHistory.pop();
+      }
+
       saveSentHistory();
       saveLastPosts();
-      
+
       scheduledPosts.splice(i, 1);
+
       hasChanges = true;
     }
   }
-  if (hasChanges) saveSchedule();
+
+  if (hasChanges) {
+    saveSchedule();
+  }
 }, 30000);
 
-bot.launch().then(() => {
-  console.log("✅ Bot launched successfully.");
-});
+// ============================================================
+// 🚀 START BOT
+// ============================================================
+bot.launch()
+  .then(() => {
+    console.log("✅ Bot launched successfully.");
+  })
+  .catch((err) => {
+    console.error(
+      "❌ Bot launch failed:",
+      err.message
+    );
+  });
 
-const PORT = process.env.PORT || 10000;
+// ============================================================
+// 🌐 Render Web Server
+// ============================================================
+const PORT =
+  process.env.PORT || 10000;
+
 http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain" });
-  res.end("Bot Engine Online");
+  res.writeHead(200, {
+    "Content-Type": "text/plain"
+  });
+
+  res.end(
+    "Bot Engine Online"
+  );
 }).listen(PORT);
