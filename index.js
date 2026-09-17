@@ -321,7 +321,7 @@ bot.hears("📝 Create Post", (ctx) => {
   const id = ctx.from.id;
   resetStates(id);
   postStep[id] = "waiting_post_text";
-  ctx.reply("📝 **Send your post text/HTML code now:**\n(বট অটোমেটিক GitHub থেকে ছবি টেনে চ্যানেলে পাঠিয়ে দেবে)");
+  ctx.reply("📝 **Send your post text/HTML code now:**\n(একাধিক পোস্ট পাঠাতে চাইলে প্রতিটির মাঝে `✅✅✅✅✅` দিন)");
 });
 
 bot.hears("⏰ Schedule Post", (ctx) => {
@@ -431,7 +431,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  // 🚀 CREATE POST HANDLER (Processes text/HTML codes, grabs GitHub images automatically)
+  // 🚀 CREATE POST HANDLER (Robust Bulk Processing with Flood Wait Handling)
   if (postStep[id] === "waiting_post_text") {
     postStep[id] = null;
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
@@ -440,7 +440,9 @@ bot.on("text", async (ctx) => {
       ? text.split("✅✅✅✅✅").map(p => p.trim()).filter(p => p.length > 0)
       : [text];
 
-    ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Fetching GitHub images and sending to channels with a 5-second interval...`);
+    await ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending to channels securely with auto-delay...`);
+
+    let totalSentCount = 0;
 
     for (let i = 0; i < rawPosts.length; i++) {
       const singlePostText = rawPosts[i];
@@ -450,30 +452,48 @@ bot.on("text", async (ctx) => {
       let channelMessages = {};
 
       for (const channel of channels) {
-        try {
-          const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
-            caption: cleanedCaption,
-            parse_mode: "HTML",
-            reply_markup: replyMarkup
-          });
-          lastSentPosts[channel] = sentMsg.message_id;
-          channelMessages[channel] = sentMsg.message_id;
-        } catch (err) {
-          console.error(`Failed to send post ${i + 1} to ${channel}:`, err.message);
+        let sent = false;
+        let retries = 3;
+        while (!sent && retries > 0) {
+          try {
+            const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
+              caption: cleanedCaption,
+              parse_mode: "HTML",
+              reply_markup: replyMarkup
+            });
+            lastSentPosts[channel] = sentMsg.message_id;
+            channelMessages[channel] = sentMsg.message_id;
+            sent = true;
+          } catch (err) {
+            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
+              const waitSec = err.response.parameters.retry_after + 2;
+              await new Promise(r => setTimeout(r, waitSec * 1000));
+              retries--;
+            } else {
+              break;
+            }
+          }
         }
+        // Small delay between channels
+        await new Promise(r => setTimeout(r, 1500));
       }
 
-      sentPostsHistory.unshift({ text: singlePostText, channelMessages, time: Date.now() });
+      if (Object.keys(channelMessages).length > 0) {
+        sentPostsHistory.unshift({ text: singlePostText, channelMessages, time: Date.now() });
+        totalSentCount++;
+      }
+
       if (sentPostsHistory.length > 100) sentPostsHistory.pop();
       saveSentHistory();
       saveLastPosts();
 
+      // Delay between different posts to avoid Telegram flood limits
       if (i < rawPosts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 6000));
       }
     }
 
-    return ctx.reply(`✅ **All ${rawPosts.length} post(s) have been successfully sent to your channels with GitHub images!**`);
+    return ctx.reply(`✅ **Finished! Successfully sent ${totalSentCount} out of ${rawPosts.length} post(s) to your channels.**`);
   }
 
   if (scheduleStep[id] === "waiting_post_text") {
@@ -540,7 +560,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 
-  // 🚀 AUTO-DETECT BULK POST (If sent directly without clicking Create Post)
+  // 🚀 AUTO-DETECT BULK POST (With Robust Flood Wait & Delay)
   if (text.includes("✅✅✅✅✅")) {
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
 
@@ -550,7 +570,9 @@ bot.on("text", async (ctx) => {
       return ctx.reply("❌ No valid posts found separated by `✅✅✅✅✅`.");
     }
 
-    ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Fetching GitHub images and sending to channels one by one with a 5-second interval...`);
+    await ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending securely with auto-delay...`);
+
+    let totalSentCount = 0;
 
     for (let i = 0; i < rawPosts.length; i++) {
       const singlePostText = rawPosts[i];
@@ -560,30 +582,46 @@ bot.on("text", async (ctx) => {
       let channelMessages = {};
 
       for (const channel of channels) {
-        try {
-          const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
-            caption: cleanedCaption,
-            parse_mode: "HTML",
-            reply_markup: replyMarkup
-          });
-          lastSentPosts[channel] = sentMsg.message_id;
-          channelMessages[channel] = sentMsg.message_id;
-        } catch (err) {
-          console.error(`Failed to send post ${i + 1} to ${channel}:`, err.message);
+        let sent = false;
+        let retries = 3;
+        while (!sent && retries > 0) {
+          try {
+            const sentMsg = await bot.telegram.sendPhoto(channel, imageUrl, {
+              caption: cleanedCaption,
+              parse_mode: "HTML",
+              reply_markup: replyMarkup
+            });
+            lastSentPosts[channel] = sentMsg.message_id;
+            channelMessages[channel] = sentMsg.message_id;
+            sent = true;
+          } catch (err) {
+            if (err.response && err.response.parameters && err.response.parameters.retry_after) {
+              const waitSec = err.response.parameters.retry_after + 2;
+              await new Promise(r => setTimeout(r, waitSec * 1000));
+              retries--;
+            } else {
+              break;
+            }
+          }
         }
+        await new Promise(r => setTimeout(r, 1500));
       }
 
-      sentPostsHistory.unshift({ text: singlePostText, channelMessages, time: Date.now() });
+      if (Object.keys(channelMessages).length > 0) {
+        sentPostsHistory.unshift({ text: singlePostText, channelMessages, time: Date.now() });
+        totalSentCount++;
+      }
+
       if (sentPostsHistory.length > 100) sentPostsHistory.pop();
       saveSentHistory();
       saveLastPosts();
 
       if (i < rawPosts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, 6000));
       }
     }
 
-    return ctx.reply(`✅ **All ${rawPosts.length} posts have been successfully sent to your channels with GitHub images!**`);
+    return ctx.reply(`✅ **Successfully sent ${totalSentCount} out of ${rawPosts.length} posts to your channels!**`);
   }
 
   return ctx.reply("❌ Unknown command or text. Click '📝 Create Post' or send posts containing `✅✅✅✅✅`.");
