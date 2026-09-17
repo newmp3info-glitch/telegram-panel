@@ -135,7 +135,7 @@ function processPost(caption) {
   return { text: cleanedText, replyMarkup };
 }
 
-// 🔍 Helper to detect game name from post text and map to GitHub Photo folder
+// 🔍 Helper to detect game name and match exact GitHub filenames inside "Photo" folder
 function getImageUrlFromText(postText) {
   const textLower = postText.toLowerCase();
   
@@ -155,8 +155,8 @@ function getImageUrlFromText(postText) {
    else if (textLower.includes("jaiho 777 vip")) imageName = "jaiho-777-vip.jpg";
    else if (textLower.includes("jaiho arcade")) imageName = "jaiho-arcade.jpg";
    else if (textLower.includes("jaiho win")) imageName = "jaiho-win.jpg";
-   else if (textLower.includes("jaiho slots")) imageName = "jaihoslots.jpg";
-   else if (textLower.includes("jaiho spin")) imageName = "jaihospin.jpg";
+   else if (textLower.includes("jaiho slots")) imageName = "jaiho-slots.jpg";
+   else if (textLower.includes("jaiho spin")) imageName = "jaiho-spin.jpg";
    else if (textLower.includes("jaiho rummy")) imageName = "jaiho-rummy.jpg";
    else if (textLower.includes("joy rummy")) imageName = "joy-rummy.jpg";
    else if (textLower.includes("rummy 888")) imageName = "rummy-888.jpg";
@@ -431,7 +431,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`🗑️ **Post Deleted Successfully from Channels!**\n\nSuccess: ${success}\nFailed: ${failed}`);
   }
 
-  // 🚀 CREATE POST HANDLER (Robust Bulk Processing with Flood Wait Handling)
+  // 🚀 CREATE POST HANDLER
   if (postStep[id] === "waiting_post_text") {
     postStep[id] = null;
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
@@ -440,7 +440,7 @@ bot.on("text", async (ctx) => {
       ? text.split("✅✅✅✅✅").map(p => p.trim()).filter(p => p.length > 0)
       : [text];
 
-    await ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending to channels securely with auto-delay...`);
+    await ctx.reply(`🚀 **Processing Started!**\nFound **${rawPosts.length}** post(s). Sending to channels...`);
 
     let totalSentCount = 0;
 
@@ -465,6 +465,7 @@ bot.on("text", async (ctx) => {
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
+            console.error(`Error sending to ${channel}:`, err.message);
             if (err.response && err.response.parameters && err.response.parameters.retry_after) {
               const waitSec = err.response.parameters.retry_after + 2;
               await new Promise(r => setTimeout(r, waitSec * 1000));
@@ -474,7 +475,6 @@ bot.on("text", async (ctx) => {
             }
           }
         }
-        // Small delay between channels
         await new Promise(r => setTimeout(r, 1500));
       }
 
@@ -487,9 +487,8 @@ bot.on("text", async (ctx) => {
       saveSentHistory();
       saveLastPosts();
 
-      // Delay between different posts to avoid Telegram flood limits
       if (i < rawPosts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 6000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
 
@@ -499,7 +498,7 @@ bot.on("text", async (ctx) => {
   if (scheduleStep[id] === "waiting_post_text") {
     scheduleData[id] = { caption: text };
     scheduleStep[id] = "waiting_time";
-    return ctx.reply("📝 Post Text Saved! Send schedule duration in minutes OR Date & Time with AM/PM (e.g., **01/08/2026, 09:00 am**):");
+    return ctx.reply("📝 Post Text Saved! Send schedule duration in minutes OR Date & Time with AM/PM:");
   }
 
   if (scheduleStep[id] === "waiting_time") {
@@ -560,7 +559,7 @@ bot.on("text", async (ctx) => {
     return ctx.reply(`✅ Post Scheduled for (IST): ${targetTime.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`);
   }
 
-  // 🚀 AUTO-DETECT BULK POST (With Robust Flood Wait & Delay)
+  // 🚀 AUTO-DETECT BULK POST
   if (text.includes("✅✅✅✅✅")) {
     if (channels.length === 0) return ctx.reply("❌ No channels found. Please add a channel first.");
 
@@ -570,7 +569,7 @@ bot.on("text", async (ctx) => {
       return ctx.reply("❌ No valid posts found separated by `✅✅✅✅✅`.");
     }
 
-    await ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending securely with auto-delay...`);
+    await ctx.reply(`🚀 **Bulk Processing Started!**\nFound **${rawPosts.length}** posts. Sending...`);
 
     let totalSentCount = 0;
 
@@ -595,6 +594,7 @@ bot.on("text", async (ctx) => {
             channelMessages[channel] = sentMsg.message_id;
             sent = true;
           } catch (err) {
+            console.error(`Error sending to ${channel}:`, err.message);
             if (err.response && err.response.parameters && err.response.parameters.retry_after) {
               const waitSec = err.response.parameters.retry_after + 2;
               await new Promise(r => setTimeout(r, waitSec * 1000));
@@ -617,7 +617,7 @@ bot.on("text", async (ctx) => {
       saveLastPosts();
 
       if (i < rawPosts.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 6000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
 
