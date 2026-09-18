@@ -1,0 +1,12 @@
+{
+  "name": "telegram-userbot",
+  "version": "1.0.0",
+  "description": "Telegram userbot for auto forwarding promo codes",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "telegram": "latest"
+  }
+}
