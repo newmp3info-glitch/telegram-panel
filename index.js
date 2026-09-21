@@ -373,7 +373,13 @@ function getImageUrlFromText(postText) {
     textLower.includes("boss-rummy")
   )
     imageName = "boss-rummy.jpg";
-
+    
+else if (
+    textLower.includes("rummy-zip") ||
+    textLower.includes("rummy-zip")
+  )
+    imageName = "rummy-zip.jpg";
+  
   else if (
     textLower.includes("club inr") ||
     textLower.includes("club-inr")
