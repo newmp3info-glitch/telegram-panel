@@ -714,6 +714,13 @@ function getImageUrlFromText(postText) {
   )
     imageName = "jeet-spin.jpg";
 
+  else if (
+    textLower.includes("jaiho play") ||
+    textLower.includes("jaiho-play") ||
+    textLower.includes("jaihoplay")
+  )
+    imageName = "jaiho-play.jpg";
+
   return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/Photo/${imageName}`;
 }
 
