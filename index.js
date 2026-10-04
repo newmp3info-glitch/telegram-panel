@@ -29,9 +29,8 @@ const bot = new Telegraf(BOT_TOKEN);
 // ============================================================
 
 // একই পোস্টের 10 channel parallel-এ পাঠানো হবে
-// পরের পোস্ট শুরু হওয়ার আগে কমপক্ষে 8 sec interval
-// 8 sec = theoretical 7.5 posts/minute
-const BULK_POST_INTERVAL_MS = 8000;
+// পরের পোস্ট শুরু হওয়ার আগে কমপক্ষে 3 sec interval (১ মিনিটে ২০টি পোস্ট)
+const BULK_POST_INTERVAL_MS = 3000;
 
 // Telegram 429 হলে retry করার সর্বোচ্চ সংখ্যা
 const MAX_SEND_RETRIES = 3;
@@ -1213,7 +1212,7 @@ async function uploadPhotoAndUpdateGameMapping(
   // 2) index.js-এর latest version নিয়ে mapping update
   // ----------------------------------------------------------
   // GitHub-এ অন্য কোনো commit একই সময়ে হলে একবার fresh SHA নিয়ে
-  // retry করা হবে। Existing bot logic-এ কোনো পরিবর্তন হবে না।
+  // retry করা হবে। Existing bot logic-এ কোনো পরিবর্তন হবেবিধা হবে না।
   for (
     let attempt = 0;
     attempt < 2;
@@ -1883,7 +1882,7 @@ async function processDocumentBulkJob({
       // ⏱️ Next post start interval
       //
       // পুরো send operation যত সময় নিয়েছে সেটা বাদ দিয়ে
-      // মোট 8 sec interval maintain করার চেষ্টা
+      // মোট 3 sec interval maintain করার চেষ্টা
       // ======================================================
 
       if (
@@ -2007,9 +2006,14 @@ bot.use(
     if (
       ctx.from.id != ADMIN_ID
     ) {
-      return ctx.reply(
-        "⛔ Access Denied"
-      );
+      try {
+        return await ctx.reply(
+          "⛔ Access Denied: This bot is only for Admin."
+        );
+      } catch (err) {
+        console.log("Error sending admin warning:", err.message);
+        return;
+      }
     }
 
     return next();
@@ -3789,6 +3793,13 @@ setInterval(
   },
   30000
 );
+
+// ============================================================
+// 🛡️ GLOBAL ERROR HANDLER (Prevents Crash)
+// ============================================================
+bot.catch((err, ctx) => {
+    console.error(`[Global Error] Update ${ctx.updateType}:`, err.message);
+});
 
 // ============================================================
 // 🚀 START BOT
