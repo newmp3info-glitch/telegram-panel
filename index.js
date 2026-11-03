@@ -3823,53 +3823,32 @@ bot.catch((err, ctx) => {
 });
 
 // ============================================================
-// 🚀 START BOT
+// 🌐 RENDER WEB SERVER & WEBHOOK SETUP
 // ============================================================
 
-bot.launch()
-  .then(
-    () => {
+const PORT = process.env.PORT || 10000;
+const WEBHOOK_PATH = `/webhook-${BOT_TOKEN}`;
 
-      console.log(
-        "✅ Bot launched successfully."
-      );
+const server = http.createServer((req, res) => {
+  if (req.url === WEBHOOK_PATH) {
+    return bot.webhookCallback(WEBHOOK_PATH)(req, res);
+  }
+  res.writeHead(200, { "Content-Type": "text/plain" });
+  res.end("Bot Engine Online");
+});
 
+server.listen(PORT, async () => {
+  console.log(`✅ Server running on port ${PORT}`);
+
+  if (process.env.RENDER_EXTERNAL_URL) {
+    const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}${WEBHOOK_PATH}`;
+    try {
+      await bot.telegram.setWebhook(webhookUrl);
+      console.log(`✅ Webhook successfully set to: ${webhookUrl}`);
+    } catch (err) {
+      console.error("❌ Failed to set webhook:", err.message);
     }
-  )
-  .catch(
-    err => {
-
-      console.error(
-        "❌ Bot launch failed:",
-        err.message
-      );
-
-    }
-  );
-
-// ============================================================
-// 🌐 RENDER WEB SERVER
-// ============================================================
-
-const PORT =
-  process.env.PORT ||
-  10000;
-
-http
-  .createServer(
-    (req, res) => {
-
-      res.writeHead(
-        200,
-        {
-          "Content-Type":
-            "text/plain"
-        }
-      );
-
-      res.end(
-        "Bot Engine Online"
-      );
-    }
-  )
-  .listen(PORT);
+  } else {
+    console.log("⚠️ RENDER_EXTERNAL_URL not found.");
+  }
+});
