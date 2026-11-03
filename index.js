@@ -30,7 +30,7 @@ const bot = new Telegraf(BOT_TOKEN);
 
 // একই পোস্টের 10 channel parallel-এ পাঠানো হবে
 // পরের পোস্ট শুরু হওয়ার আগে কমপক্ষে 3 sec interval (১ মিনিটে ২০টি পোস্ট)
-const BULK_POST_INTERVAL_MS = 3000;
+const BULK_POST_INTERVAL_MS = 4000;
 
 // Telegram 429 হলে retry করার সর্বোচ্চ সংখ্যা
 const MAX_SEND_RETRIES = 3;
