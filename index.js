@@ -3837,18 +3837,25 @@ const server = http.createServer((req, res) => {
   res.end("Bot Engine Online");
 });
 
-server.listen(PORT, async () => {
+server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 
-  if (process.env.RENDER_EXTERNAL_URL) {
-    const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}${WEBHOOK_PATH}`;
-    try {
-      await bot.telegram.setWebhook(webhookUrl);
-      console.log(`✅ Webhook successfully set to: ${webhookUrl}`);
-    } catch (err) {
-      console.error("❌ Failed to set webhook:", err.message);
+  // সার্ভার চালু হওয়ার ৩ সেকেন্ড পর ওয়েবহুক সেট করার চেষ্টা করবে
+  setTimeout(async () => {
+    if (process.env.RENDER_EXTERNAL_URL) {
+      const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}${WEBHOOK_PATH}`;
+      try {
+        // প্রথমে আগের কোনো ওয়েবহুক থাকলে তা ডিলিট করে নেওয়া
+        await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+        
+        // নতুন ওয়েবহুক সেট করা
+        await bot.telegram.setWebhook(webhookUrl);
+        console.log(`✅ Webhook successfully set to: ${webhookUrl}`);
+      } catch (err) {
+        console.error("❌ Failed to set webhook:", err.message);
+      }
+    } else {
+      console.log("⚠️ RENDER_EXTERNAL_URL not found.");
     }
-  } else {
-    console.log("⚠️ RENDER_EXTERNAL_URL not found.");
-  }
+  }, 3000);
 });
