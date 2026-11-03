@@ -860,10 +860,13 @@ bot.catch((err, ctx) => {
 });
 
 // ============================================================
-// 🌐 RENDER WEB SERVER & WEBHOOK HANDLER
+// 🌐 RENDER WEB SERVER & WEBHOOK SETUP
 // ============================================================
 const PORT = process.env.PORT || 10000;
-const WEBHOOK_PATH = `/webhook-${BOT_TOKEN}`;
+
+// টোকেনের কোলন (:) বাদ দিয়ে সেফ পাথ তৈরি করা হলো যাতে প্রক্সি এরর না আসে
+const SAFE_TOKEN = BOT_TOKEN.replace(/:/g, '');
+const WEBHOOK_PATH = `/webhook-${SAFE_TOKEN}`;
 
 const server = http.createServer((req, res) => {
   if (req.url === WEBHOOK_PATH) {
