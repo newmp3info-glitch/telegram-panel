@@ -860,7 +860,7 @@ bot.catch((err, ctx) => {
 });
 
 // ============================================================
-// 🌐 RENDER WEB SERVER & RETRY WEBHOOK SETUP
+// 🌐 RENDER WEB SERVER & WEBHOOK HANDLER
 // ============================================================
 const PORT = process.env.PORT || 10000;
 const WEBHOOK_PATH = `/webhook-${BOT_TOKEN}`;
@@ -875,36 +875,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-
-  setTimeout(async () => {
-    if (process.env.RENDER_EXTERNAL_URL) {
-      const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}${WEBHOOK_PATH}`;
-      const telegramApiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=${encodeURIComponent(webhookUrl)}&drop_pending_updates=true`;
-
-      // সর্বোচ্চ ৩ বার চেষ্টার লুপ (Retry Loop)
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          console.log(`⏳ Attempt ${attempt}: Setting webhook...`);
-          const response = await fetch(telegramApiUrl);
-          const data = await response.json();
-
-          if (data.ok) {
-            console.log(`✅ Webhook successfully set to: ${webhookUrl}`);
-            break;
-          } else {
-            console.error(`❌ Telegram API Error (Attempt ${attempt}): ${data.description}`);
-          }
-        } catch (err) {
-          console.error(`❌ Failed to set webhook (Attempt ${attempt}):`, err.message);
-        }
-
-        // প্রতিবার ফেইল করলে ৫ সেকেন্ড অপেক্ষা করে আবার চেষ্টা করবে
-        if (attempt < 3) {
-          await new Promise(resolve => setTimeout(resolve, 5000));
-        }
-      }
-    } else {
-      console.log("⚠️ RENDER_EXTERNAL_URL not found.");
-    }
-  }, 3000);
+  console.log(`🔗 Webhook Path: ${WEBHOOK_PATH}`);
 });
