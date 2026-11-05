@@ -307,7 +307,7 @@ function processPost(caption) {
     [
       {
         text: "🔥 𝗬𝗼𝗻𝗼 𝗠𝗮𝘀𝘁𝗲𝗿 𝗔𝗽𝗽 🔥",
-        url: "https://www.fastyonoapp.online",
+        url: "https://github.com/newmp3info-glitch/App/releases/download/Fast-yono-official/Fast.Yono.App.apk",
         style: "primary"
       }
     ]
