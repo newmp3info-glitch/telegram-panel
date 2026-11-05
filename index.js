@@ -735,6 +735,13 @@ function getImageUrlFromText(postText) {
   )
     imageName = "spin-rummy.jpg";
 
+  else if (
+    textLower.includes("cash rummy") ||
+    textLower.includes("cash-rummy") ||
+    textLower.includes("cashrummy")
+  )
+    imageName = "cash-rummy.jpg";
+
   return `https://raw.githubusercontent.com/${repoOwner}/${repoName}/${branch}/Photo/${imageName}`;
 }
 
